@@ -63,7 +63,10 @@ public class DiveLog {
     //Equipment
     private String suit;
     private Double weightKg;
-    private String gas;
+
+    @Enumerated(EnumType.STRING)
+    private DiveGas gas;
+    
     private Integer pressureStartBar;
     private Integer pressureEndBar;
 
@@ -74,4 +77,7 @@ public class DiveLog {
     //Notes
     @Column(length = 2000)
     private String notes;
+
+    //Images
+    private String imagePath;
 }

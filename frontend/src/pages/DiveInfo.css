@@ -1,0 +1,84 @@
+.dive-detail-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 30px;
+}
+
+.back-btn {
+  margin-bottom: 20px;
+  background: rgba(56,189,248,0.15);
+  color: #38bdf8;
+  border-radius: 10px;
+}
+
+.dive-hero {
+  position: relative;
+  border-radius: 18px;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.dive-hero img {
+  width: 100%;
+  height: 320px;
+  object-fit: cover;
+}
+
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 20px;
+  background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+}
+
+.hero-overlay h1 {
+  margin: 0;
+  font-size: 32px;
+}
+
+.hero-overlay p {
+  color: #cbd5e1;
+}
+
+.dive-grid-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.info-card {
+  background: #111827;
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.info-card h3 {
+  margin-bottom: 10px;
+  color: #38bdf8;
+}
+
+.full {
+  grid-column: 1 / -1;
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+  color: #cbd5e1;
+  font-size: 14px;
+}
+
+.info-row svg {
+  color: #38bdf8;
+}
+
+.label {
+  color: #94a3b8;
+  margin-right: 4px;
+}

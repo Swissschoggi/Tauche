@@ -177,3 +177,50 @@ button {
   padding: 60px 20px;
   color: rgba(148,163,184,0.8);
 }
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.btn-danger {
+  background: #ef4444;
+  color: white;
+}
+
+.dive-card.selected {
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.4);
+}
+
+.checkbox {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid #38bdf8;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: #38bdf8;
+  z-index: 10;
+}
+
+.checkbox.checked {
+  background: #38bdf8;
+  color: #0f172a;
+}
+
+.dive-card {
+  position: relative;
+}

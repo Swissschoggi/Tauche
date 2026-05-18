@@ -7,5 +7,11 @@ const api = axios.create({
 export const getAllDives = () => api.get('/dives')
 export const getDiveById = (id) => api.get(`/dives/${id}`)
 export const createDive = (dive) => api.post('/dives', dive)
-export const updateDive = (id, dive) => api.put(`/dives/${id}`, dive)
 export const deleteDive = (id) => api.delete(`/dives/${id}`)
+
+export const updateDive = (id, data) =>
+  api.put(`/dives/${id}`, data, {
+    headers: {
+      "Content-Type": "multipart/form-data"
+    }
+  })

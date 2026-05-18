@@ -4,6 +4,7 @@ import com.tauche.tauche.model.DiveLog;
 import com.tauche.tauche.repository.DiveLogRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
 import java.util.List;
 
 @Service
@@ -27,8 +28,37 @@ public class DiveLogService {
 
     public DiveLog update(Long id, DiveLog updated) {
         DiveLog existing = getById(id);
-        updated.setId(existing.getId());
-        return repository.save(updated);
+
+        existing.setDiveTitle(updated.getDiveTitle());
+        existing.setDate(updated.getDate());
+        existing.setLocation(updated.getLocation());
+        existing.setDiveSite(updated.getDiveSite());
+        existing.setDiveType(updated.getDiveType());
+
+        existing.setDepthMeters(updated.getDepthMeters());
+        existing.setDurationMinutes(updated.getDurationMinutes());
+        existing.setWaterTemperatureCelsius(updated.getWaterTemperatureCelsius());
+        existing.setVisibilityMeters(updated.getVisibilityMeters());
+
+        existing.setWaterType(updated.getWaterType());
+        existing.setWeather(updated.getWeather());
+
+        existing.setSuit(updated.getSuit());
+        existing.setWeightKg(updated.getWeightKg());
+        existing.setGas(updated.getGas());
+
+        existing.setPressureStartBar(updated.getPressureStartBar());
+        existing.setPressureEndBar(updated.getPressureEndBar());
+
+        existing.setBuddy(updated.getBuddy());
+        existing.setDiveCenter(updated.getDiveCenter());
+        existing.setNotes(updated.getNotes());
+
+        if (updated.getImagePath() != null) {
+            existing.setImagePath(updated.getImagePath());
+        }
+
+        return repository.save(existing);
     }
 
     public void delete(Long id) {

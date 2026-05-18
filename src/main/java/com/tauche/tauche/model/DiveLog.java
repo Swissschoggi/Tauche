@@ -36,11 +36,10 @@ public class DiveLog {
     @NotBlank
     private String location;
 
-    @NotBlank
-    private String diveSite;
-
     @Enumerated(EnumType.STRING)
     private DiveType diveType;
+
+    private String diveSite;
 
     //Dive stats
     @NotNull

@@ -53,7 +53,7 @@ export default function HomePage() {
   return (
     <div className="dive-list-page">
       <div className="header">
-        <h1>Dive Log</h1>
+        <h1>Tauche</h1>
         <div className="header-actions">
           {selectMode ? (
             <>

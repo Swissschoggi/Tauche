@@ -93,8 +93,9 @@ export default function DiveInfo() {
   return (
     <div className="dive-detail-page">
 
-      <button onClick={() => navigate(-1)}>← Back</button>
-
+        <button className="back-btn" onClick={() => navigate(-1)}>
+        ← Back
+        </button>
         <div className="dive-hero">
 
           <img

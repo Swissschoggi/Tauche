@@ -23,11 +23,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
 
-    @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
-        String path = request.getRequestURI();
-        return path.startsWith("/uploads/");
-    }
+@Override
+protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+    String path = request.getRequestURI();
+    return path.startsWith("/uploads/") || 
+           path.startsWith("/api/auth/") || 
+           path.equals("/api/config");
+}
 
     @Override
     protected void doFilterInternal(

@@ -1,25 +1,37 @@
 package com.tauche.tauche.config;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.security.Keys;
-import org.springframework.stereotype.Service;
-
-import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+import javax.crypto.SecretKey;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
+
 @Service
 public class JwtService {
 
-    private static final String SECRET_HEX = "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970";
+    @Value("${JWT_SECRET}")
+    private String secretHex;
 
     private SecretKey getSigningKey() {
-        byte[] keyBytes = Decoders.BASE64URL.decode(SECRET_HEX);
-        return Keys.hmacShaKeyFor(keyBytes);
+        return Keys.hmacShaKeyFor(hexToBytes(secretHex));
+    }
+
+    private byte[] hexToBytes(String s) {
+        int len = s.length();
+        byte[] data = new byte[len / 2];
+        for (int i = 0; i < len; i += 2) {
+            data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
+                                 + Character.digit(s.charAt(i+1), 16));
+        }
+        return data;
     }
 
     public String extractEmail(String token) {

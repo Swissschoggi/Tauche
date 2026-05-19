@@ -14,6 +14,6 @@ public class Diver {
     @Column(unique = true, nullable = false)
     private String email;
 
-    @Column(nullable = false)
+    @Column(length = 60)
     private String password;
 }

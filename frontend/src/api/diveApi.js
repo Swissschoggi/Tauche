@@ -1,4 +1,5 @@
 import axios from "axios";
+import CryptoJS from "crypto-js";
 
 let apiInstance = null;
 
@@ -69,12 +70,14 @@ export async function deleteDive(id) {
 
 export async function loginUser(email, password) {
   const api = await getApi();
-  return await api.post(`/api/auth/login`, { email, password });
+  const hashedPassword = CryptoJS.SHA256(password).toString();
+  return await api.post(`/api/auth/login`, { email, password: hashedPassword });
 }
 
 export async function registerUser(email, password) {
   const api = await getApi();
-  return await api.post(`/api/auth/register`, { email, password });
+  const hashedPassword = CryptoJS.SHA256(password).toString();
+  return await api.post(`/api/auth/register`, { email, password: hashedPassword });
 }
 
 export async function getDiverProfile() {

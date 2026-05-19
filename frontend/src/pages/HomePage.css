@@ -1,9 +1,8 @@
 body {
   margin: 0;
-  background:
-   radial-gradient(circle at top, #1e3a8a 0%, #0f172a 35%, #020617 100%);
-  color: #e2e8f0;
-  font-family: 'Inter', sans-serif;
+  background: radial-gradient(circle at top, #1e3a8a 0%, #0f172a 35%, #020617 100%);
+  color: var(--text);
+  font-family: 'Inter', system-ui, sans-serif;
 }
 
 body::before {
@@ -48,7 +47,7 @@ body::before {
 }
 
 button {
-  background: #38bdf8;
+  background: var(--accent);
   color: #0f172a;
   border: none;
   padding: 10px 16px;
@@ -67,7 +66,7 @@ button {
 }
 
 .location {
-  color: #94a3b8;
+  color: var(--muted);
   margin-bottom: 14px;
 }
 
@@ -82,7 +81,7 @@ button {
   padding: 6px 10px;
   border-radius: 999px;
   font-size: 12px;
-  color: #cbd5e1;
+  color: var(--text);
 }
 
 .dive-grid {
@@ -93,20 +92,35 @@ button {
 }
 
 .dive-card {
+  position: relative;
   background: rgba(17, 24, 39, 0.88);
   border-radius: 20px;
   overflow: hidden;
   cursor: pointer;
-  transition: all 0.25s ease;
-  border: 1px solid rgba(255,255,255,0.05);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   box-shadow: 0 10px 30px rgba(0,0,0,0.35);
   backdrop-filter: blur(10px);
 }
 
+.dive-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(144, 224, 239, 0.1) 0%, transparent 50%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
 .dive-card:hover {
-  transform: translateY(-6px);
-  border-color: rgba(144,224,239,0.25);
-  box-shadow: 0 18px 40px rgba(0,0,0,0.45);
+  transform: translateY(-6px) scale(1.01);
+  border-color: rgba(144, 224, 239, 0.35);
+  box-shadow: 0 20px 40px rgba(0, 119, 182, 0.2);
+}
+
+.dive-card:hover::before {
+  opacity: 1;
 }
 
 .dive-image {
@@ -129,23 +143,15 @@ button {
 
 .location {
   margin-top: 8px;
-  color: #94a3b8;
+  color: var(--muted);
   font-size: 14px;
 }
 
 .dive-tags span {
   background: rgba(255,255,255,0.05);
   border: 1px solid rgba(255,255,255,0.05);
-  color: #cbd5e1;
+  color: var(--text);
   padding: 6px 11px;
-  border-radius: 999px;
-  font-size: 12px;
-}
-
-.dive-tags span {
-  background: rgba(255,255,255,0.06);
-  color: #cbd5e1;
-  padding: 5px 10px;
   border-radius: 999px;
   font-size: 12px;
 }
@@ -158,12 +164,7 @@ button {
   content: "";
   position: absolute;
   inset: 0;
-  background:
-    linear-gradient(
-      to top,
-      rgba(17,24,39,0.9) 0%,
-      rgba(17,24,39,0) 40%
-    );
+  background: linear-gradient(to top, rgba(17,24,39,0.9) 0%, rgba(17,24,39,0) 40%);
 }
 
 .dive-list-page {
@@ -195,7 +196,7 @@ button {
 }
 
 .dive-card.selected {
-  border-color: #38bdf8;
+  border-color: var(--accent);
   box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.4);
 }
 
@@ -206,21 +207,27 @@ button {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  border: 2px solid #38bdf8;
+  border: 2px solid var(--accent);
   background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 13px;
-  color: #38bdf8;
+  color: var(--accent);
   z-index: 10;
 }
 
 .checkbox.checked {
-  background: #38bdf8;
+  background: var(--accent);
   color: #0f172a;
 }
 
 .dive-card {
   position: relative;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }

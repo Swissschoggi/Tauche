@@ -6,9 +6,12 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;      // <-- ADDED MISSING IMPORT
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;     // <-- ADDED MISSING IMPORT
+import jakarta.persistence.ManyToOne;     // <-- ADDED MISSING IMPORT
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -24,9 +27,9 @@ public class DiveLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    //Padi Logbook was used as reference for the entities
+    // Padi Logbook was used as reference for the entities
 
-    //Basic info
+    // Basic info
     @NotBlank
     private String diveTitle;
 
@@ -36,12 +39,18 @@ public class DiveLog {
     @NotBlank
     private String location;
 
+    private Double latitude;
+    private Double longitude;
+
     @Enumerated(EnumType.STRING)
     private DiveType diveType;
 
+    @Enumerated(EnumType.STRING)
+    private DivePurpose divePurpose;
+
     private String diveSite;
 
-    //Dive stats
+    // Dive stats
     @NotNull
     @Positive
     private Double depthMeters;
@@ -53,13 +62,13 @@ public class DiveLog {
     private Double waterTemperatureCelsius;
     private Double visibilityMeters;
 
-    //Conditions
+    // Conditions
     @Enumerated(EnumType.STRING)
     private WaterType waterType;
 
     private String weather;
 
-    //Equipment
+    // Equipment
     private String suit;
     private Double weightKg;
 
@@ -69,14 +78,19 @@ public class DiveLog {
     private Integer pressureStartBar;
     private Integer pressureEndBar;
 
-    //People
+    // People
     private String buddy;
     private String diveCenter;
 
-    //Notes
+    // Notes
     @Column(length = 2000)
     private String notes;
 
-    //Images
+    // Images
     private String imagePath;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "diver_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private Diver diver;
 }

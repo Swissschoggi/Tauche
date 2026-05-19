@@ -19,43 +19,46 @@ public class DiveLogService {
 
     public DiveLog getById(Long id) {
         return repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Dive not found"));
+                .orElseThrow(() -> new RuntimeException("Dive log entry not found"));
     }
 
     public DiveLog create(DiveLog diveLog) {
         return repository.save(diveLog);
     }
 
-    public DiveLog update(Long id, DiveLog updated) {
-        DiveLog existing = getById(id);
+    public DiveLog update(Long id, DiveLog incomingData) {
+        DiveLog existing = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Target log entry missing"));
 
-        existing.setDiveTitle(updated.getDiveTitle());
-        existing.setDate(updated.getDate());
-        existing.setLocation(updated.getLocation());
-        existing.setDiveSite(updated.getDiveSite());
-        existing.setDiveType(updated.getDiveType());
+        existing.setDiveTitle(incomingData.getDiveTitle());
+        existing.setDate(incomingData.getDate());
+        existing.setLocation(incomingData.getLocation());
+        existing.setDiveSite(incomingData.getDiveSite());
+        existing.setDiveType(incomingData.getDiveType());
 
-        existing.setDepthMeters(updated.getDepthMeters());
-        existing.setDurationMinutes(updated.getDurationMinutes());
-        existing.setWaterTemperatureCelsius(updated.getWaterTemperatureCelsius());
-        existing.setVisibilityMeters(updated.getVisibilityMeters());
+        existing.setDepthMeters(incomingData.getDepthMeters());
+        existing.setDurationMinutes(incomingData.getDurationMinutes());
+        existing.setWaterTemperatureCelsius(incomingData.getWaterTemperatureCelsius());
+        existing.setVisibilityMeters(incomingData.getVisibilityMeters());
 
-        existing.setWaterType(updated.getWaterType());
-        existing.setWeather(updated.getWeather());
+        existing.setWaterType(incomingData.getWaterType());
+        existing.setWeather(incomingData.getWeather());
 
-        existing.setSuit(updated.getSuit());
-        existing.setWeightKg(updated.getWeightKg());
-        existing.setGas(updated.getGas());
+        existing.setSuit(incomingData.getSuit());
+        existing.setWeightKg(incomingData.getWeightKg());
+        existing.setGas(incomingData.getGas());
 
-        existing.setPressureStartBar(updated.getPressureStartBar());
-        existing.setPressureEndBar(updated.getPressureEndBar());
+        existing.setPressureStartBar(incomingData.getPressureStartBar());
+        existing.setPressureEndBar(incomingData.getPressureEndBar());
 
-        existing.setBuddy(updated.getBuddy());
-        existing.setDiveCenter(updated.getDiveCenter());
-        existing.setNotes(updated.getNotes());
-
-        if (updated.getImagePath() != null) {
-            existing.setImagePath(updated.getImagePath());
+        existing.setBuddy(incomingData.getBuddy());
+        existing.setDiveCenter(incomingData.getDiveCenter());
+        existing.setNotes(incomingData.getNotes());
+        existing.setLatitude(incomingData.getLatitude());
+        existing.setLongitude(incomingData.getLongitude());
+        
+        if (incomingData.getImagePath() != null) {
+            existing.setImagePath(incomingData.getImagePath());
         }
 
         return repository.save(existing);
@@ -63,5 +66,9 @@ public class DiveLogService {
 
     public void delete(Long id) {
         repository.deleteById(id);
+    }
+
+    public List<DiveLog> getByDiverId(Long diverId) {
+        return repository.findByDiverId(diverId);
     }
 }

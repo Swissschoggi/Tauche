@@ -1,0 +1,6 @@
+.profile-chart-container {
+  background: rgba(5, 10, 20, 0.5);
+  border-radius: 10px;
+  padding: 16px;
+  border: 1px solid rgba(144, 224, 239, 0.1);
+}

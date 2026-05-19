@@ -110,3 +110,75 @@ button:hover {
 body {
   font-family: 'Inter', system-ui, sans-serif;
 }
+
+
+.back-dashboard-global-btn {
+  position: absolute; 
+  top: 24px;
+  left: 24px;
+  z-index: 100; 
+  
+  background: rgba(30, 41, 59, 0.75) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 10px 18px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  
+  color: #38bdf8 !important; 
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.back-dashboard-global-btn:hover {
+  background: rgba(30, 41, 59, 0.9) !important;
+  border-color: rgba(56, 189, 248, 0.4) !important;
+  color: #ffffff !important;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+}
+
+.back-dashboard-global-btn:active {
+  transform: translateY(0);
+}
+
+.nav-settings-global-btn {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  z-index: 9999;
+  
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  
+  background: rgba(30, 41, 59, 0.75) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  color: #38bdf8 !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  transition: all 0.2s ease-in-out;
+}
+
+.nav-settings-global-btn:hover {
+  background: rgba(30, 41, 59, 0.9) !important;
+  border-color: rgba(56, 189, 248, 0.4) !important;
+  color: #ffffff !important;
+  transform: translateY(-1px);
+}
+
+.nav-settings-global-btn:active {
+  transform: translateY(0);
+}

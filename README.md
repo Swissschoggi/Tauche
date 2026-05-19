@@ -89,6 +89,12 @@ http://localhost:5173
 
 ## Docker Compose Setup
 
+### Download the docker-compose.yml
+
+```bash
+wget https://raw.githubusercontent.com/Swissschoggi/tauche/refs/heads/main/docker-compose.yml
+```
+
 ### Create Root `.env`
 
 Place the following `.env` file in the project root:
@@ -110,7 +116,7 @@ POSTGRES_DB=divelog_db
 Build and start all services:
 
 ```bash
-docker-compose up --build -d
+docker-compose up -d
 ```
 
 ---

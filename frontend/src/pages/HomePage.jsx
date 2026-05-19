@@ -100,8 +100,7 @@ useEffect(() => {
                 <div className="dive-image-wrapper">
                   <img
                     className="dive-image"
-                    src={d.imagePath ? `http://localhost:8080${d.imagePath}` : "https://placehold.co/600x400?text=Dive"}
-                    alt={d.diveTitle}
+                    src={d.imagePath ? `${window.location.protocol}//${window.location.hostname}:8989${d.imagePath}` : "https://placehold.co/600x400?text=Dive"}                    alt={d.diveTitle}
                   />
                 </div>
                 

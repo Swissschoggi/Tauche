@@ -64,7 +64,7 @@ export default function SettingsPage() {
             <div className="setting-row">
               <div className="setting-info">
                 <label>Unit System Selection</label>
-                <span>Freedin units RAHHHH</span>
+                <span>Freedom units RAHHHH</span>
               </div>
               <input 
                 type="checkbox" 

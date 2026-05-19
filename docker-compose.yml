@@ -25,6 +25,7 @@ services:
     image: docker.io/swissschoggi/tauche:latest
     container_name: tauche-app
     restart: always
+    pull_policy: always
     depends_on:
       postgres:
         condition: service_healthy

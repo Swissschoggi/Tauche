@@ -1,49 +1,59 @@
 import axios from "axios";
 
-const API_BASE = "http://localhost:8080/api";
+let apiInstance = null;
 
-const api = axios.create({
-  baseURL: API_BASE,
-});
+async function getApi() {
+  if (apiInstance) return apiInstance;
 
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("user_session_token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
+  try {
+    const response = await fetch('/api/config');
+    const config = await response.json();
+    const url = `${window.location.protocol}//${window.location.hostname}:${config.BACKEND_PORT}`;
+    
+    apiInstance = axios.create({ baseURL: url });
+    apiInstance.interceptors.request.use((config) => {
+      const token = localStorage.getItem("user_session_token");
+      if (token) config.headers.Authorization = `Bearer ${token}`;
+      return config;
+    });
+    
+    return apiInstance;
+  } catch (e) {
+    apiInstance = axios.create({ baseURL: `${window.location.protocol}//${window.location.hostname}:8080` });
+    return apiInstance;
   }
-);
+}
 
 export async function getAllDives() {
-  const response = await api.get("/dives");
+  const api = await getApi();
+  const response = await api.get("/api/dives");
   return response.data;
 }
 
 export async function getDiveById(id) {
-  const response = await api.get(`/dives/${id}`);
+  const api = await getApi();
+  const response = await api.get(`/api/dives/${id}`);
   return response.data;
 }
 
 export async function createDive(diveData) {
-  const response = await api.post("/dives", diveData);
+  const api = await getApi();
+  const response = await api.post("/api/dives", diveData);
   return response.data;
 }
 
 export async function updateDive(id, payload) {
-  const response = await api.put(`/dives/${id}`, payload);
+  const api = await getApi();
+  const response = await api.put(`/api/dives/${id}`, payload);
   return response.data;
 }
 
 export async function uploadDiveImage(id, file) {
+  const api = await getApi();
   const formData = new FormData();
   formData.append("image", file);
   
-  const response = await api.post(`/dives/${id}/upload-image`, formData, {
+  const response = await api.post(`/api/dives/${id}/upload-image`, formData, {
     headers: {
       "Content-Type": "multipart/form-data",
     },
@@ -52,19 +62,23 @@ export async function uploadDiveImage(id, file) {
 }
 
 export async function deleteDive(id) {
-  const response = await api.delete(`/dives/${id}`);
+  const api = await getApi();
+  const response = await api.delete(`/api/dives/${id}`);
   return response.data;
 }
 
 export async function loginUser(email, password) {
-  return await axios.post(`${API_BASE}/auth/login`, { email, password });
+  const api = await getApi();
+  return await api.post(`/api/auth/login`, { email, password });
 }
 
 export async function registerUser(email, password) {
-  return await axios.post(`${API_BASE}/auth/register`, { email, password });
+  const api = await getApi();
+  return await api.post(`/api/auth/register`, { email, password });
 }
 
 export async function getDiverProfile() {
-  const response = await api.get("/auth/profile");
+  const api = await getApi();
+  const response = await api.get("/api/auth/profile");
   return response.data;
 }

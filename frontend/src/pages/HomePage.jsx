@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { getAllDives, deleteDive } from "../api/diveApi"
+import { getAllDives, deleteDive, getImageUrl } from "../api/diveApi"
 import { BarChart3, Map, Plus, User } from "lucide-react"
 import { Settings } from "lucide-react"
 import "./HomePage.css"
@@ -8,14 +8,24 @@ import "./HomePage.css"
 export default function HomePage() {
   const navigate = useNavigate()
   const [dives, setDives] = useState([])
+  const [diveImages, setDiveImages] = useState({})
   const [selectedIds, setSelectedIds] = useState([])
 
-useEffect(() => {
+  useEffect(() => {
     async function load() {
       try {
         const res = await getAllDives()
         if (res) {
           setDives(res)
+          const imageMap = {}
+          await Promise.all(
+            res.map(async (d) => {
+              if (d.imagePath) {
+                imageMap[d.id] = await getImageUrl(d.imagePath)
+              }
+            })
+          )
+          setDiveImages(imageMap)
         }
       } catch (err) {
         console.error("Failed loading data dashboard entries:", err)
@@ -23,6 +33,7 @@ useEffect(() => {
     }
     load()
   }, [])
+
   function toggleSelectCard(id, e) {
     e.stopPropagation()
     setSelectedIds(prev =>
@@ -45,26 +56,26 @@ useEffect(() => {
     <div className="dive-list-page">
       <div className="header">
         <h1>Tauche</h1>
-        
+
         <div className="header-actions">
           {selectedIds.length > 0 && (
             <button className="btn-danger" onClick={handleDeleteSelected}>
               Delete ({selectedIds.length})
             </button>
           )}
-          
+
           <button className="btn-secondary" onClick={() => navigate("/analytics")}>
             <BarChart3 size={16} style={{ marginRight: "6px", verticalAlign: "middle" }} />
             Analytics
           </button>
-            <button className="nav-settings-global-btn" onClick={() => navigate("/settings")}>
-              <Settings size={16} /> Settings
-            </button>
+          <button className="nav-settings-global-btn" onClick={() => navigate("/settings")}>
+            <Settings size={16} /> Settings
+          </button>
           <button className="btn-secondary" onClick={() => navigate("/map")}>
             <Map size={16} style={{ marginRight: "6px", verticalAlign: "middle" }} />
             Globe View
           </button>
-          
+
           <button onClick={() => navigate("/new")}>
             <Plus size={16} style={{ marginRight: "6px", verticalAlign: "middle" }} />
             New Log
@@ -96,14 +107,15 @@ useEffect(() => {
                 >
                   {isChecked && "✓"}
                 </div>
-                
+
                 <div className="dive-image-wrapper">
                   <img
                     className="dive-image"
-                    src={d.imagePath ? `${window.location.protocol}//${window.location.hostname}:8989${d.imagePath}` : "https://placehold.co/600x400?text=Dive"}                    alt={d.diveTitle}
+                    src={diveImages[d.id] || "https://placehold.co/600x400?text=Dive"}
+                    alt={d.diveTitle}
                   />
                 </div>
-                
+
                 <div className="dive-info">
                   <h3>{d.diveTitle || "Untitled Expedition"}</h3>
                   <p className="location">📍 {d.location || "Unknown Coordinates"}</p>

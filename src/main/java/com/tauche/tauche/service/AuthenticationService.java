@@ -1,25 +1,39 @@
 package com.tauche.tauche.service;
 
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.stereotype.Service;
+
+import com.tauche.tauche.config.JwtService;
 import com.tauche.tauche.dto.AuthResponse;
 import com.tauche.tauche.dto.LoginRequest;
-import com.tauche.tauche.model.Diver;
 import com.tauche.tauche.repository.DiverRepository;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 public class AuthenticationService {
+
     private final DiverRepository diverRepository;
-    private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
+    private final JwtService jwtService;
 
-    public boolean authenticate(LoginRequest request) {
-        Diver diver = diverRepository.findByEmail(request.getEmail())
-                .orElse(null);
-        
-        if (diver == null) return false;
+    public AuthResponse authenticate(LoginRequest request) {
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        request.getEmail(),
+                        request.getPassword()
+                )
+        );
 
-        return passwordEncoder.matches(request.getPassword(), diver.getPassword());
+        var user = diverRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        var jwtToken = jwtService.generateToken(user.getEmail());
+
+        return AuthResponse.builder()
+                .token(jwtToken)
+                .build();
     }
 }

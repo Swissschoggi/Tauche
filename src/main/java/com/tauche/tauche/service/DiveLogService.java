@@ -1,11 +1,14 @@
 package com.tauche.tauche.service;
 
-import com.tauche.tauche.model.DiveLog;
-import com.tauche.tauche.repository.DiveLogRepository;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import com.tauche.tauche.model.DiveLog;
+import com.tauche.tauche.repository.DiveLogRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -17,9 +20,13 @@ public class DiveLogService {
         return repository.findAll();
     }
 
+    public Optional<DiveLog> findById(Long id) {
+        return repository.findById(id);
+    }
+
     public DiveLog getById(Long id) {
         return repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Dive log entry not found"));
+                .orElseThrow(() -> new RuntimeException("Dive log entry not found: " + id));
     }
 
     public DiveLog create(DiveLog diveLog) {
@@ -28,7 +35,7 @@ public class DiveLogService {
 
     public DiveLog update(Long id, DiveLog incomingData) {
         DiveLog existing = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Target log entry missing"));
+                .orElseThrow(() -> new RuntimeException("Target log entry missing: " + id));
 
         existing.setDiveTitle(incomingData.getDiveTitle());
         existing.setDate(incomingData.getDate());
@@ -56,7 +63,7 @@ public class DiveLogService {
         existing.setNotes(incomingData.getNotes());
         existing.setLatitude(incomingData.getLatitude());
         existing.setLongitude(incomingData.getLongitude());
-        
+
         if (incomingData.getImagePath() != null) {
             existing.setImagePath(incomingData.getImagePath());
         }

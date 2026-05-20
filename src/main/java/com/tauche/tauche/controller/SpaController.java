@@ -6,11 +6,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @Controller
 public class SpaController {
 
+
     @RequestMapping(value = {
-        "/{path:[^\\.]*}", 
-        "/{path:^(?!api|static|js|css|img|images).*$}/{path:[^\\.]*}"
+        "/",
+        "/{path:^(?!api|uploads|static|assets)[^\\.]*$}",
+        "/{path:^(?!api|uploads|static|assets)[^\\.]*$}/**"
     })
-    public String redirect() {
+    public String forwardToSpa() {
         return "forward:/index.html";
     }
 }

@@ -16,7 +16,6 @@ import io.jsonwebtoken.security.Keys;
 
 @Service
 public class JwtService {
-
     @Value("${JWT_SECRET}")
     private String secretHex;
 
@@ -50,7 +49,7 @@ public class JwtService {
                 .subject(email)
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24))
-                .signWith(getSigningKey())
+                .signWith(getSigningKey(), Jwts.SIG.HS256)
                 .compact();
     }
 

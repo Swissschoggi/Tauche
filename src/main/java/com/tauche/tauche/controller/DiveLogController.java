@@ -8,8 +8,19 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.WebDataBinder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.tauche.tauche.model.DiveLog;
@@ -47,43 +58,37 @@ public class DiveLogController {
     }
 
     @GetMapping
+    @Transactional(readOnly = true)
     public ResponseEntity<List<DiveLog>> getAll(Authentication authentication) {
-        if (authentication == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        
+        if (authentication == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+
         String userEmail = authentication.getName();
         Diver diver = diverRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Authenticated diver profile missing"));
 
-        List<DiveLog> personalLogs = service.getByDiverId(diver.getId());
-        return ResponseEntity.ok(personalLogs);
+        return ResponseEntity.ok(service.getByDiverId(diver.getId()));
     }
 
     @GetMapping("/{id}")
+    @Transactional(readOnly = true)
     public ResponseEntity<DiveLog> getById(@PathVariable Long id, Authentication authentication) {
-        if (authentication == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
+        if (authentication == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 
-        DiveLog diveLog = service.getById(id);
-        if (diveLog == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        String userEmail = authentication.getName();
-        if (!diveLog.getDiver().getEmail().equals(userEmail)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-        
-        return ResponseEntity.ok(diveLog);
+        return service.findById(id)
+                .map(diveLog -> {
+                    // This line previously crashed because the session was closed
+                    if (!diveLog.getDiver().getEmail().equals(authentication.getName())) {
+                        return ResponseEntity.status(HttpStatus.FORBIDDEN).<DiveLog>build();
+                    }
+                    return ResponseEntity.ok(diveLog);
+                })
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
+    @Transactional
     public ResponseEntity<DiveLog> create(@RequestBody DiveLog diveLog, Authentication authentication) {
-        if (authentication == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
+        if (authentication == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 
         String userEmail = authentication.getName();
         Diver diver = diverRepository.findByEmail(userEmail)
@@ -94,90 +99,75 @@ public class DiveLogController {
     }
 
     @PutMapping("/{id}")
+    @Transactional
     public ResponseEntity<DiveLog> update(
             @PathVariable Long id,
             @RequestBody DiveLog diveLog,
             Authentication authentication
     ) {
-        if (authentication == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
+        if (authentication == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 
-        DiveLog existingDive = service.getById(id);
-        if (existingDive == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        String userEmail = authentication.getName();
-        if (!existingDive.getDiver().getEmail().equals(userEmail)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-
-        if (diveLog.getImagePath() == null || diveLog.getImagePath().trim().isEmpty()) {
-            diveLog.setImagePath(existingDive.getImagePath());
-        }
-
-        diveLog.setDiver(existingDive.getDiver());
-
-        DiveLog updated = service.update(id, diveLog);
-        return ResponseEntity.ok(updated);
+        return service.findById(id)
+                .map(existingDive -> {
+                    // Accessing .getDiver() here is now safe because of @Transactional
+                    if (!existingDive.getDiver().getEmail().equals(authentication.getName())) {
+                        return ResponseEntity.status(HttpStatus.FORBIDDEN).<DiveLog>build();
+                    }
+                    if (diveLog.getImagePath() == null || diveLog.getImagePath().trim().isEmpty()) {
+                        diveLog.setImagePath(existingDive.getImagePath());
+                    }
+                    diveLog.setDiver(existingDive.getDiver());
+                    return ResponseEntity.ok(service.update(id, diveLog));
+                })
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")
+    @Transactional
     public ResponseEntity<Void> delete(@PathVariable Long id, Authentication authentication) {
-        if (authentication == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
+        if (authentication == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 
-        DiveLog existingDive = service.getById(id);
-        if (existingDive == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        String userEmail = authentication.getName();
-        if (!existingDive.getDiver().getEmail().equals(userEmail)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-
-        service.delete(id);
-        return ResponseEntity.noContent().build();
+        return service.findById(id)
+                .map(existingDive -> {
+                    if (!existingDive.getDiver().getEmail().equals(authentication.getName())) {
+                        return ResponseEntity.status(HttpStatus.FORBIDDEN).<Void>build();
+                    }
+                    service.delete(id);
+                    return ResponseEntity.noContent().<Void>build();
+                })
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping(value = "/{id}/upload-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Transactional
     public ResponseEntity<DiveLog> uploadImage(
             @PathVariable Long id,
             @RequestParam("image") MultipartFile image,
             Authentication authentication
     ) {
-        log.info("Incoming multi-part file transaction intercepted for dive log entity ID: {}", id);
-        
-        if (authentication == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        
-        DiveLog existingDive = service.getById(id);
-        if (existingDive == null) {
-            return ResponseEntity.notFound().build();
-        }
-        
-        String userEmail = authentication.getName();
-        if (!existingDive.getDiver().getEmail().equals(userEmail)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+        log.info("Image upload request for dive ID: {}", id);
+        if (authentication == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 
-        if (image != null && !image.isEmpty()) {
-            try {
-                String path = fileService.storeImage(image);
-                existingDive.setImagePath(path);
-                
-                DiveLog updated = service.update(id, existingDive);
-                return ResponseEntity.ok(updated);
-            } catch (Exception e) {
-                log.error("Internal processing error encountered during binary execution mapping: ", e);
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-            }
-        }
-        
-        return ResponseEntity.badRequest().build();
+        return service.findById(id)
+                .map(existingDive -> {
+                    if (!existingDive.getDiver().getEmail().equals(authentication.getName())) {
+                        return ResponseEntity.status(HttpStatus.FORBIDDEN).<DiveLog>build();
+                    }
+                    if (image == null || image.isEmpty()) {
+                        return ResponseEntity.badRequest().<DiveLog>build();
+                    }
+                    try {
+                        String path = fileService.storeImage(image);
+                        existingDive.setImagePath(path);
+                        return ResponseEntity.ok(service.update(id, existingDive));
+                    } catch (IllegalArgumentException e) {
+                        log.warn("Rejected upload for dive {}: {}", id, e.getMessage());
+                        return ResponseEntity.badRequest().<DiveLog>build();
+                    } catch (Exception e) {
+                        log.error("Image storage failure for dive {}: ", id, e);
+                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).<DiveLog>build();
+                    }
+                })
+                .orElse(ResponseEntity.notFound().build());
     }
 }

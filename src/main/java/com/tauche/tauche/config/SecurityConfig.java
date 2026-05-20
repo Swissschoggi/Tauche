@@ -43,7 +43,9 @@ public class SecurityConfig {
                 config.setAllowCredentials(true);
                 return config;
             }))
-            .csrf(csrf -> csrf.disable())
+            .csrf(csrf -> csrf
+                .ignoringRequestMatchers("/api/auth/**", "/api/**", "/uploads/**")
+            )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authenticationProvider(authenticationProvider)
             .authorizeHttpRequests(auth -> auth

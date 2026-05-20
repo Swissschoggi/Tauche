@@ -4,8 +4,9 @@ import { getDiveById, updateDive, uploadDiveImage } from "../api/diveApi"
 import {
   Calendar, MapPin, ArrowDown, Timer, Compass, Thermometer,
   Eye, Waves, Cloud, Shirt, Weight, Gauge, User, Building,
-  FlaskRound
+  FlaskRound, FileText
 } from "lucide-react"
+import DOMPurify from 'dompurify';
 import "./DiveInfo.css"
 
 function formatValueWithUnits(name, value, isMetric) {
@@ -201,13 +202,19 @@ export default function DiveInfo() {
   return (
     <div className="dive-detail-page">
       <button className="back-dashboard-global-btn" onClick={() => navigate("/")}>← Back to Dashboard</button>
+      
       <div className="dive-hero">
-        <img src={imagePreview || (dive.imagePath ? dive.imagePath : "https://placehold.co/600x400?text=Dive")} alt="Dive view" />
+        <img 
+          src={imagePreview || (dive.imagePath ? dive.imagePath : "https://placehold.co/600x400?text=Dive")} 
+          alt="Dive view" 
+        />
+        
         {isEditing && (
           <label className="image-upload-btn">📷 Change image
             <input type="file" hidden accept="image/*" onChange={(e) => handleImageChange(e.target.files[0])} />
           </label>
         )}
+        
         <div className="hero-overlay">
           {isEditing ? (
             <input className="hero-title-input" value={formData.diveTitle || ""} onChange={(e) => setFormData((p) => ({ ...p, diveTitle: e.target.value }))} />
@@ -217,6 +224,7 @@ export default function DiveInfo() {
           <p><MapPin size={14} style={{ display: "inline", marginRight: "6px", verticalAlign: "middle" }} /> {dive.location || "Unknown Coordinates"}</p>
         </div>
       </div>
+
       <div className="dive-grid-info">
         <div className="info-card">
           <h3>Core Dive</h3>
@@ -240,6 +248,7 @@ export default function DiveInfo() {
           <EditableRow editing={isEditing} icon={Timer} label="Duration" name="durationMinutes" value={formData.durationMinutes} onChange={(k, v) => setFormData((p) => ({ ...p, [k]: v }))} isMetric={isMetric} />
           <EditableRow editing={isEditing} icon={Compass} label="Type" name="diveType" value={formData.diveType} onChange={(k, v) => setFormData((p) => ({ ...p, [k]: v }))} isMetric={isMetric} />
         </div>
+
         <div className="info-card">
           <h3>Conditions</h3>
           <EditableRow editing={isEditing} icon={Waves} label="Water" name="waterType" value={formData.waterType} onChange={(k, v) => setFormData((p) => ({ ...p, [k]: v }))} isMetric={isMetric} />
@@ -247,6 +256,7 @@ export default function DiveInfo() {
           <EditableRow editing={isEditing} icon={Eye} label="Visibility" name="visibilityMeters" value={formData.visibilityMeters} onChange={(k, v) => setFormData((p) => ({ ...p, [k]: v }))} isMetric={isMetric} />
           <EditableRow editing={isEditing} icon={Cloud} label="Weather" name="weather" value={formData.weather} onChange={(k, v) => setFormData((p) => ({ ...p, [k]: v }))} isMetric={isMetric} />
         </div>
+
         <div className="info-card">
           <h3>Equipment</h3>
           <EditableRow editing={isEditing} icon={Shirt} label="Suit" name="suit" value={formData.suit} onChange={(k, v) => setFormData((p) => ({ ...p, [k]: v }))} isMetric={isMetric} />
@@ -255,12 +265,32 @@ export default function DiveInfo() {
           <EditableRow editing={isEditing} icon={Gauge} label="Start Pressure" name="pressureStartBar" value={formData.pressureStartBar} onChange={(k, v) => setFormData((p) => ({ ...p, [k]: v }))} isMetric={isMetric} />
           <EditableRow editing={isEditing} icon={Gauge} label="End Pressure" name="pressureEndBar" value={formData.pressureEndBar} onChange={(k, v) => setFormData((p) => ({ ...p, [k]: v }))} isMetric={isMetric} />
         </div>
+
         <div className="info-card">
           <h3>People</h3>
           <EditableRow editing={isEditing} icon={User} label="Buddy" name="buddy" value={formData.buddy} onChange={(k, v) => setFormData((p) => ({ ...p, [k]: v }))} isMetric={isMetric} />
           <EditableRow editing={isEditing} icon={Building} label="Dive Center" name="diveCenter" value={formData.diveCenter} onChange={(k, v) => setFormData((p) => ({ ...p, [k]: v }))} isMetric={isMetric} />
         </div>
+
+        <div className="info-card notes-card" style={{ gridColumn: "1 / -1" }}>
+          <h3><FileText size={18} style={{ display: "inline", marginRight: "6px", verticalAlign: "middle" }} /> Dive Log Notes</h3>
+          {isEditing ? (
+            <textarea
+              className="info-row-input"
+              style={{ width: "100%", minHeight: "100px", background: "rgba(5, 10, 20, 0.4)", border: "1px solid rgba(144, 224, 239, 0.15)", borderRadius: "8px", color: "#caf0f8", padding: "10px", boxSizing: "border-box" }}
+              value={formData.notes || ""}
+              onChange={(e) => setFormData((p) => ({ ...p, notes: e.target.value }))}
+            />
+          ) : (
+            <div 
+              className="notes-content-view" 
+              style={{ color: "#94a3b8", fontSize: "14px", lineHeight: "1.6", marginTop: "10px" }}
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(dive.notes || "No log commentary available for this session.") }} 
+            />
+          )}
+        </div>
       </div>
+
       <button className="submit-btn" onClick={() => (isEditing ? handleSave() : setIsEditing(true))}>
         {isEditing ? "Save Log Changes" : "Edit Parameters"}
       </button>

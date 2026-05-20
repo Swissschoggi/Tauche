@@ -32,5 +32,11 @@ export const diveFormSchema = [
   { name: "pressureEndBar", label: "End Pressure (Bar)", type: "number" },
   { name: "buddy", label: "Buddy", type: "text" },
   { name: "diveCenter", label: "Dive Center", type: "text" },
-  { name: "notes", label: "Notes", type: "textarea" }
+  { name: "notes", label: "Notes", type: "textarea" },
+
+  {
+  name: "cylinderVolumeLiters",
+  label: "Cylinder Volume (L)",
+  type: "number",
+  }
 ];

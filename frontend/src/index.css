@@ -21,11 +21,9 @@ body {
   font-family: 'Inter', system-ui, sans-serif;
 }
 
-
 #root {
   min-height: 100vh;
 }
-
 
 button {
   background: var(--accent);
@@ -43,82 +41,11 @@ button:hover {
   filter: brightness(1.05);
 }
 
-
-.dive-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 24px;
-}
-
-
-.dive-card {
-  background: rgba(17, 24, 39, 0.85);
-  border-radius: 18px;
-  overflow: hidden;
-  cursor: pointer;
-  transition: all 0.25s ease;
-  border: 1px solid rgba(255,255,255,0.05);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
-}
-
-.dive-card:hover {
-  transform: translateY(-6px);
-  border-color: rgba(56,189,248,0.4);
-}
-
-
-.dive-image {
-  width: 100%;
-  height: 240px;
-  object-fit: cover;
-  display: block;
-}
-
-
-.dive-info {
-  padding: 16px;
-}
-
-.dive-info h3 {
-  font-size: 20px;
-  margin-bottom: 6px;
-}
-
-.location {
-  color: var(--muted);
-  font-size: 14px;
-  margin-bottom: 12px;
-}
-
-
-.dive-tags {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.dive-tags span {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.06);
-  padding: 5px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  color: var(--muted);
-}
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
-
-body {
-  font-family: 'Inter', system-ui, sans-serif;
-}
-
-
 .back-dashboard-global-btn {
   position: absolute; 
   top: 24px;
   left: 24px;
   z-index: 100; 
-  
   background: rgba(30, 41, 59, 0.75) !important;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -126,7 +53,6 @@ body {
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-  
   color: #38bdf8 !important; 
   font-size: 13px;
   font-weight: 600;
@@ -140,11 +66,6 @@ body {
   border-color: rgba(56, 189, 248, 0.4) !important;
   color: #ffffff !important;
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
-}
-
-.back-dashboard-global-btn:active {
-  transform: translateY(0);
 }
 
 .nav-settings-global-btn {
@@ -152,7 +73,6 @@ body {
   top: 24px;
   right: 24px;
   z-index: 9999;
-  
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -163,7 +83,6 @@ body {
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
-  
   background: rgba(30, 41, 59, 0.75) !important;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -180,6 +99,61 @@ body {
   transform: translateY(-1px);
 }
 
-.nav-settings-global-btn:active {
-  transform: translateY(0);
+/* 5. Dive Cards & Layouts */
+.dive-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+.dive-card {
+  background: rgba(17, 24, 39, 0.85);
+  border-radius: 18px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  border: 1px solid rgba(255,255,255,0.05);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+}
+
+.dive-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(56,189,248,0.4);
+}
+
+.dive-image {
+  width: 100%;
+  height: 240px;
+  object-fit: cover;
+  display: block;
+}
+
+.dive-info {
+  padding: 16px;
+}
+
+.dive-info h3 {
+  font-size: 20px;
+  margin-bottom: 6px;
+}
+
+.location {
+  color: var(--muted);
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.dive-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.dive-tags span {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.06);
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--muted);
 }

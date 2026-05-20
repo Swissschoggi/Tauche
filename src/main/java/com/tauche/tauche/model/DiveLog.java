@@ -63,6 +63,8 @@ public class DiveLog {
     @Column(nullable = false)
     private Double depthMeters;
 
+    private Double cylinderVolumeLiters;
+
     @NotNull
     @Positive
     @Column(nullable = false)

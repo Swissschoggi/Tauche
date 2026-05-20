@@ -27,9 +27,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         String path = request.getRequestURI();
-        return path.startsWith("/uploads/") || 
-               path.startsWith("/api/auth/") || 
-               path.equals("/api/config");
+        return path.startsWith("/uploads/");
     }
 
     @Override
@@ -54,13 +52,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             userEmail = jwtService.extractEmail(jwt);
 
             if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                
-                // Fetch the actual user from your database using UserDetailsService
                 UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
                 
-                // Pass getUsername() to match the String expectation of your JwtService
                 if (jwtService.isTokenValid(jwt, userDetails.getUsername())) {
-                    
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                             userDetails,
                             null,
@@ -68,7 +62,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     );
                     
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                     logger.info("Authentication successful for user: " + userEmail);
                 } else {

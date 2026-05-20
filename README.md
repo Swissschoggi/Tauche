@@ -1,4 +1,4 @@
-# Tauche — Dive Logbook & Telemetry Analytics Suite
+# Tauche, Dive Logbook & Telemetry Analytics Suite
 
 **Tauche** *(Swiss German for “diving”)* is a modern full-stack web application for logging, managing, and analyzing scuba dives.  
 It combines detailed dive logging with interactive telemetry visualization, geospatial mapping, and an automated media upload pipeline.

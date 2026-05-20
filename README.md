@@ -2,6 +2,7 @@
 
 **Tauche** *(Swiss German for “diving”)* is a modern full-stack web application for logging, managing, and analyzing scuba dives.  
 It combines detailed dive logging with interactive telemetry visualization, geospatial mapping, and an automated media upload pipeline.
+As a disclaimer, I partially vibecoded this, due to time constraints and lack of knowledge. I am always happy if people can help me improve both my skills and this app by opening issues :)
 
 ---
 
@@ -36,7 +37,8 @@ Make sure the following tools are installed:
 
 ##  Backend Setup
 
-Open a terminal in the project root directory and start the Spring Boot backend:
+1. Configure your local database properties or environment variables.
+2. Run the Spring Boot wrapper script inside the root directory:
 
 ```bash
 ./mvnw spring-boot:run
@@ -89,10 +91,12 @@ http://localhost:5173
 
 ## Docker Compose Setup
 
-### Download the docker-compose.yml
+### Download the docker-compose.yml and .env file
 
 ```bash
 wget https://raw.githubusercontent.com/Swissschoggi/tauche/refs/heads/main/docker-compose.yml
+wget https://github.com/Swissschoggi/tauche/blob/47869051771f6b9534c03e86497614a041a497ea/.env.example
+mv .env.example .env
 ```
 
 ### Create Root `.env`
@@ -153,27 +157,10 @@ Tauche/
 
 ## CORS Configuration
 
-If you change frontend ports, domains, or add reverse proxies, update the allowed origins inside:
+Tauche parses cross-origin restrictions dynamically at startup from your environment configuration. You do not need to change java core code to whitelist new nodes. Simply append your target access URLs directly to the ALLOWED_ORIGINS variable separated by commas inside your active .env context block before firing docker commands:
 
-```text
-src/main/java/com/tauche/config/WebConfig.java
-```
-
-Example configuration:
-
-```java
-registry.addMapping("/**")
-    .allowedOrigins(
-        "http://localhost:5173",
-        "http://localhost:3000"
-    )
-    .allowedMethods(
-        "GET",
-        "POST",
-        "PUT",
-        "DELETE",
-        "OPTIONS"
-    );
+```env
+ALLOWED_ORIGINS=[http://172.168.1.143:8989](http://172.168.1.143:8989),http://localhost:5173
 ```
 
 ---

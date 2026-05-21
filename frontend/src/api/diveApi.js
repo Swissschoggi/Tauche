@@ -1,9 +1,15 @@
 import axios from "axios";
 
-const backendBaseUrl = `${window.location.protocol}//${window.location.hostname}:8989`;
+const isDevelopment = window.location.hostname === 'localhost' || 
+                      window.location.hostname === '127.0.0.1' ||
+                      window.location.hostname === '172.168.1.143';
+
+const backendBaseUrl = isDevelopment 
+  ? `${window.location.protocol}//${window.location.hostname}:8989`
+  : ''; 
 
 const api = axios.create({
-  baseURL: backendBaseUrl,
+  baseURL: backendBaseUrl || '/api', 
 });
 
 api.interceptors.request.use((config) => {
@@ -17,69 +23,70 @@ api.interceptors.request.use((config) => {
 });
 
 async function fetchNonce(email) {
-  const res = await api.post("/api/auth/nonce", { email });
+  const res = await api.post("/auth/nonce", { email });
   return res.data.nonce;
 }
 
 export async function loginUser(email, password) {
   const nonce = await fetchNonce(email);
-  // Send raw password and nonce. No client-side hashing!
-  return await api.post("/api/auth/login", { email, password, nonce });
+  return await api.post("/auth/login", { email, password, nonce });
 }
 
 export async function registerUser(email, password) {
   const nonce = await fetchNonce(email);
-  // Send raw password and nonce.
-  return await api.post("/api/auth/register", { email, password, nonce });
+  return await api.post("/auth/register", { email, password, nonce });
 }
 
 export async function getAllDives() {
-  const response = await api.get("/api/dives");
+  const response = await api.get("/dives");
   return response.data;
 }
 
 export async function getDiveById(id) {
-  const response = await api.get(`/api/dives/${id}`);
+  const response = await api.get(`/dives/${id}`);
   return response.data;
 }
 
 export async function createDive(diveData) {
-  const response = await api.post("/api/dives", diveData);
+  const response = await api.post("/dives", diveData);
   return response.data;
 }
 
 export async function updateDive(id, payload) {
-  const response = await api.put(`/api/dives/${id}`, payload);
+  const response = await api.put(`/dives/${id}`, payload);
   return response.data;
 }
 
 export async function uploadDiveImage(id, file) {
   const formData = new FormData();
   formData.append("image", file);
-  const response = await api.post(`/api/dives/${id}/upload-image`, formData, {
+  const response = await api.post(`/dives/${id}/upload-image`, formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
   return response.data;
 }
 
 export async function deleteDive(id) {
-  const response = await api.delete(`/api/dives/${id}`);
+  const response = await api.delete(`/dives/${id}`);
   return response.data;
 }
 
 export async function getDiverProfile() {
-  const response = await api.get("/api/auth/profile");
+  const response = await api.get("/auth/profile");
   return response.data;
 }
 
 export async function getImageUrl(imagePath) {
   if (!imagePath) return null;
-  return `${backendBaseUrl}${imagePath}`;
+  if (isDevelopment) {
+    return `${backendBaseUrl}${imagePath}`;
+  }
+  return imagePath;
 }
 
 export async function getEquipmentCloset() {
   try {
-    const response = await api.get("/api/equipment");
+    const response = await api.get("/equipment");
     console.log("Equipment API response:", response); 
     return response.data;
   } catch (error) {
@@ -89,12 +96,12 @@ export async function getEquipmentCloset() {
 }
 
 export async function addEquipmentItem(equipmentData) {
-  const response = await api.post("/api/equipment", equipmentData);
+  const response = await api.post("/equipment", equipmentData);
   console.log("Add equipment response:", response);
   return response.data;
 }
 
 export async function removeEquipmentItem(id) {
-  const response = await api.delete(`/api/equipment/${id}`);
+  const response = await api.delete(`/equipment/${id}`);
   return response.data;
 }

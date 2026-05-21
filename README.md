@@ -103,7 +103,7 @@ http://localhost:5173
 
 ```bash
 wget https://raw.githubusercontent.com/Swissschoggi/tauche/refs/heads/main/docker-compose.yml
-wget https://github.com/Swissschoggi/tauche/blob/47869051771f6b9534c03e86497614a041a497ea/.env.example
+wget https://raw.githubusercontent.com/Swissschoggi/tauche/refs/heads/main/.env.example
 mv .env.example .env
 ```
 

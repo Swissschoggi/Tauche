@@ -45,9 +45,9 @@ public class DiveLogDTO {
     private List<Long> equipmentIds = new ArrayList<>();
 
     public static DiveLogDTO fromEntity(DiveLog diveLog) {
-        if (diveLog == null) return null;
-        
-        DiveLogDTO dto = new DiveLogDTO();
+    if (diveLog == null) return null;
+    
+    DiveLogDTO dto = new DiveLogDTO();
         dto.setId(diveLog.getId());
         dto.setDiveTitle(diveLog.getDiveTitle());
         dto.setDate(diveLog.getDate());
@@ -74,13 +74,24 @@ public class DiveLogDTO {
         dto.setNotes(diveLog.getNotes());
         dto.setImagePath(diveLog.getImagePath());
         
-        // Keep equipment lists empty for loading (to avoid ConcurrentModificationException)
-        dto.setEquipmentUsed(new ArrayList<>());
-        dto.setEquipmentIds(new ArrayList<>());
+        if (diveLog.getEquipmentUsed() != null && !diveLog.getEquipmentUsed().isEmpty()) {
+            List<SimpleEquipmentDTO> equipmentDTOs = diveLog.getEquipmentUsed().stream()
+                    .map(SimpleEquipmentDTO::fromEntity)
+                    .collect(java.util.stream.Collectors.toList());
+            dto.setEquipmentUsed(equipmentDTOs);
+            
+            List<Long> ids = diveLog.getEquipmentUsed().stream()
+                    .map(eq -> eq.getId())
+                    .collect(java.util.stream.Collectors.toList());
+            dto.setEquipmentIds(ids);
+        } else {
+            dto.setEquipmentUsed(new ArrayList<>());
+            dto.setEquipmentIds(new ArrayList<>());
+        }
         
         return dto;
     }
-    
+
     public DiveLog toEntity() {
         DiveLog diveLog = new DiveLog();
         diveLog.setId(this.id);

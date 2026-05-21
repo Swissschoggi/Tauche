@@ -20,10 +20,12 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.EqualsAndHashCode;
 
 @Entity
 @Table(name = "equipment")
 @Data
+@EqualsAndHashCode(exclude = {"diveLogs", "diver"})
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

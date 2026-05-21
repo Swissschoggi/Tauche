@@ -106,21 +106,6 @@ wget https://raw.githubusercontent.com/Swissschoggi/tauche/refs/heads/main/docke
 wget https://raw.githubusercontent.com/Swissschoggi/tauche/refs/heads/main/.env.example
 mv .env.example .env
 ```
-
-### Create Root `.env`
-
-Place the following `.env` file in the project root:
-
-```env
-FRONTEND_PORT=3000
-BACKEND_PORT=8080
-POSTGRES_PORT=5432
-
-POSTGRES_USER=dive_master
-POSTGRES_PASSWORD=secure_reef_password
-POSTGRES_DB=divelog_db
-```
-
 ---
 
 ### Launch the Stack

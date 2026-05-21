@@ -7,7 +7,7 @@
 
 **Tauche** *(Swiss German for “diving”)* is a modern full-stack web application for logging, managing, and analyzing scuba dives.  
 It combines detailed dive logging with interactive telemetry visualization, 3D geospatial mapping, equipment service tracking, and automated media upload.
-
+As a disclaimer, I partially vibecoded this, due to time constraints and lack of knowledge. I am always happy if people can help me improve both my skills and this app by opening issues :)
 > **Live Demo**: [https://tauche.onrender.com](https://tauche.onrender.com)
 > 
 > *Note: The free tier may take up to 30 seconds to wake up on first visit.*

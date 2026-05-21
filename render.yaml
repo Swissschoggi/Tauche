@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: tauche-backend
+    runtime: image
+    repo: https://github.com/yourusername/tauche
+    plan: free
+    envVars:
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DB_URL
+        fromDatabase:
+          name: tauche-db
+          property: connectionString
+    dockerfilePath: ./Dockerfile.backend
+
+  - type: static
+    name: tauche-frontend
+    runtime: static
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: ./frontend/dist
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: no-cache
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+databases:
+  - name: tauche-db
+    plan: free

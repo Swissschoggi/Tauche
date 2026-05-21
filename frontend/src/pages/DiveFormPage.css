@@ -188,3 +188,41 @@
   margin-bottom: 24px;
   text-align: center;
 }
+
+.dive-form-page select[multiple] {
+  min-height: 120px;
+  padding: 8px;
+  background: rgba(5, 10, 20, 0.4);
+  border: 1px solid rgba(144, 224, 239, 0.15);
+  border-radius: 12px;
+  color: #caf0f8;
+  font-size: 13px;
+}
+
+.dive-form-page select[multiple] option {
+  padding: 8px 12px;
+  margin: 2px 0;
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.8);
+  color: #caf0f8;
+}
+
+.dive-form-page select[multiple] option:checked {
+  background: linear-gradient(135deg, #90e0ef, #0077b6);
+  color: #020617;
+}
+
+.dive-form-page select[multiple] option:hover {
+  background: rgba(144, 224, 239, 0.2);
+}
+
+.dive-form-page .form-group small {
+  display: block;
+  margin-top: 6px;
+  font-size: 11px;
+  color: #64748b;
+}
+
+.dive-form-page select[multiple] option[value*="Service"] {
+  border-left: 2px solid #eab308;
+}

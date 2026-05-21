@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { getAllDives, deleteDive, getImageUrl } from "../api/diveApi"
-import { BarChart3, Map, Plus, User } from "lucide-react"
-import { Settings } from "lucide-react"
+import { BarChart3, Map, Plus, User, Settings, Award, Wrench, Trash2 } from "lucide-react"
 import "./HomePage.css"
 
 export default function HomePage() {
@@ -52,6 +51,20 @@ export default function HomePage() {
     }
   }
 
+  async function handleDeleteSingle(id, diveTitle, e) {
+    e.stopPropagation()
+    if (!window.confirm(`Delete dive "${diveTitle || "Untitled"}"?`)) return
+    try {
+      await deleteDive(id)
+      setDives(prev => prev.filter(d => d.id !== id))
+      // Remove from selectedIds if it was selected
+      setSelectedIds(prev => prev.filter(selectedId => selectedId !== id))
+    } catch (err) {
+      console.error("Failed to delete dive:", err)
+      alert("Failed to delete dive. Please try again.")
+    }
+  }
+
   return (
     <div className="dive-list-page">
       <div className="header">
@@ -64,24 +77,36 @@ export default function HomePage() {
             </button>
           )}
 
-          <button className="btn-secondary" onClick={() => navigate("/analytics")}>
-            <BarChart3 size={16} style={{ marginRight: "6px", verticalAlign: "middle" }} />
-            Analytics
-          </button>
-          <button className="nav-settings-global-btn" onClick={() => navigate("/settings")}>
-            <Settings size={16} /> Settings
-          </button>
-          <button className="btn-secondary" onClick={() => navigate("/map")}>
-            <Map size={16} style={{ marginRight: "6px", verticalAlign: "middle" }} />
-            Globe View
-          </button>
-
-          <button onClick={() => navigate("/new")}>
-            <Plus size={16} style={{ marginRight: "6px", verticalAlign: "middle" }} />
+          <button className="btn-primary-action" onClick={() => navigate("/new")}>
+            <Plus size={16} />
             New Log
           </button>
 
-          <button className="btn-secondary" onClick={() => navigate("/profile")} title="View Profile">
+          <button className="btn-dashboard-nav" onClick={() => navigate("/analytics")}>
+            <BarChart3 size={16} />
+            Analytics
+          </button>
+
+          <button className="btn-dashboard-nav" onClick={() => navigate("/map")}>
+            <Map size={16} />
+            Globe View
+          </button>
+
+          <button className="btn-dashboard-nav" onClick={() => navigate("/equipment")}>
+            <Wrench size={16} />
+            Equipment
+          </button>
+
+          <button className="btn-dashboard-nav" onClick={() => navigate("/certification")}>
+            <Award size={16} />
+            Certificates
+          </button>
+
+          <button className="btn-dashboard-nav" onClick={() => navigate("/settings")} title="Settings">
+            <Settings size={16} />
+          </button>
+
+          <button className="btn-dashboard-nav profile-btn" onClick={() => navigate("/profile")} title="View Profile">
             <User size={16} />
           </button>
         </div>
@@ -101,11 +126,20 @@ export default function HomePage() {
                 className={`dive-card ${isChecked ? "selected" : ""}`}
                 onClick={() => navigate(`/dives/${d.id}`)}
               >
-                <div
-                  className={`checkbox ${isChecked ? "checked" : ""}`}
-                  onClick={(e) => toggleSelectCard(d.id, e)}
-                >
-                  {isChecked && "✓"}
+                <div className="dive-card-actions">
+                  <div
+                    className={`checkbox ${isChecked ? "checked" : ""}`}
+                    onClick={(e) => toggleSelectCard(d.id, e)}
+                  >
+                    {isChecked && "✓"}
+                  </div>
+                  <button
+                    className="delete-single-btn"
+                    onClick={(e) => handleDeleteSingle(d.id, d.diveTitle, e)}
+                    title="Delete dive"
+                  >
+                    <Trash2 size={16} />
+                  </button>
                 </div>
 
                 <div className="dive-image-wrapper">

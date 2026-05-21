@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react"
 import { useParams, useNavigate } from "react-router-dom"
-import { getDiveById, updateDive, uploadDiveImage } from "../api/diveApi" 
+import { getDiveById, updateDive, uploadDiveImage, getEquipmentCloset } from "../api/diveApi" 
 import {
   Calendar, MapPin, ArrowDown, Timer, Compass, Thermometer,
   Eye, Waves, Cloud, Shirt, Weight, Gauge, User, Building,
-  FlaskRound, FileText
+  FlaskRound, FileText, Wrench
 } from "lucide-react"
 import DOMPurify from 'dompurify';
 import "./DiveInfo.css"
@@ -114,9 +114,23 @@ export default function DiveInfo() {
   const [imagePreview, setImagePreview] = useState(null)
   const [suggestions, setSuggestions] = useState([])
   const [showSuggestions, setShowSuggestions] = useState(false)
+  const [availableEquipment, setAvailableEquipment] = useState([])
 
   const localMetricSetting = localStorage.getItem("useMetric")
   const isMetric = localMetricSetting !== null ? JSON.parse(localMetricSetting) : true
+
+  // Load equipment list
+  useEffect(() => {
+    async function loadEquipment() {
+      try {
+        const equipment = await getEquipmentCloset()
+        setAvailableEquipment(Array.isArray(equipment) ? equipment : [])
+      } catch (err) {
+        console.error("Failed to load equipment:", err)
+      }
+    }
+    loadEquipment()
+  }, [])
 
   useEffect(() => {
     async function load() {
@@ -124,6 +138,10 @@ export default function DiveInfo() {
         const res = await getDiveById(id)
         if (!res) return
         const actualData = res?.data ? res.data : res
+        // Extract equipment IDs
+        if (actualData.equipmentUsed && Array.isArray(actualData.equipmentUsed)) {
+          actualData.equipmentIds = actualData.equipmentUsed.map(eq => eq.id)
+        }
         setDive(actualData)
         setFormData(actualData)
       } catch (err) {
@@ -152,9 +170,18 @@ export default function DiveInfo() {
     return () => clearTimeout(timeout)
   }, [formData?.location])
 
+  // Handle equipment selection change
+  function handleEquipmentChange(e) {
+    const selectedOptions = Array.from(e.target.selectedOptions)
+    const selectedIds = selectedOptions.map(option => parseInt(option.value))
+    setFormData(prev => ({ ...prev, equipmentIds: selectedIds }))
+  }
+
   async function handleSave() {
     try {
       let currentDiveState = { ...formData }
+      
+      // Handle image upload
       if (imageFile) {
         try {
           const updatedDiveFromUpload = await uploadDiveImage(id, imageFile)
@@ -165,16 +192,25 @@ export default function DiveInfo() {
         }
       }
 
+      // Prepare payload - include equipmentIds
       const payload = {}
       Object.entries(currentDiveState).forEach(([key, value]) => {
         if ((key === "latitude" || key === "longitude") && (value === "" || value == null)) return
+        if (key === "equipmentIds") {
+          if (value && value.length > 0) {
+            payload[key] = value
+          } else {
+            payload[key] = [] // Send empty array if no equipment selected
+          }
+          return
+        }
         const numberFields = ["depthMeters", "durationMinutes", "waterTemperatureCelsius", "visibilityMeters", "weightKg", "pressureStartBar", "pressureEndBar"]
         if (numberFields.includes(key) && value !== "" && value !== null) {
           payload[key] = value.toString().includes(".") ? parseFloat(value) : parseInt(value, 10)
           return
         }
-        if (key === "diver" || key === "authorities") return
-        if (value !== undefined && value !== null) payload[key] = value
+        if (key === "diver" || key === "authorities" || key === "equipmentUsed") return
+        if (value !== undefined && value !== null && value !== "") payload[key] = value
       })
 
       const res = await updateDive(id, payload)
@@ -187,7 +223,8 @@ export default function DiveInfo() {
       setImageFile(null)
       setImagePreview(null)
     } catch (err) {
-      console.error(err)
+      console.error("Error saving dive:", err)
+      alert("Failed to save changes: " + (err.response?.data?.message || err.message))
     }
   }
 
@@ -198,6 +235,14 @@ export default function DiveInfo() {
   }
 
   if (!dive || !formData) return <div className="dive-detail-page" style={{textAlign:"center", paddingTop:"120px"}}><p>Loading...</p></div>
+
+  // Get selected equipment names for display
+  const selectedEquipmentNames = formData.equipmentIds && formData.equipmentIds.length > 0
+    ? availableEquipment
+        .filter(eq => formData.equipmentIds.includes(eq.id))
+        .map(eq => eq.name)
+        .join(", ")
+    : "No equipment logged"
 
   return (
     <div className="dive-detail-page">
@@ -264,6 +309,48 @@ export default function DiveInfo() {
           <EditableRow editing={isEditing} icon={Weight} label="Weight" name="weightKg" value={formData.weightKg} onChange={(k, v) => setFormData((p) => ({ ...p, [k]: v }))} isMetric={isMetric} />
           <EditableRow editing={isEditing} icon={Gauge} label="Start Pressure" name="pressureStartBar" value={formData.pressureStartBar} onChange={(k, v) => setFormData((p) => ({ ...p, [k]: v }))} isMetric={isMetric} />
           <EditableRow editing={isEditing} icon={Gauge} label="End Pressure" name="pressureEndBar" value={formData.pressureEndBar} onChange={(k, v) => setFormData((p) => ({ ...p, [k]: v }))} isMetric={isMetric} />
+        </div>
+
+        <div className="info-card">
+          <h3><Wrench size={16} style={{ display: "inline", marginRight: "6px" }} /> Gear Used</h3>
+          <div className="info-row">
+            <div className="info-row-left">
+              <Wrench size={16} />
+              <span className="label">Equipment:</span>
+            </div>
+            {isEditing ? (
+              <div style={{ position: "relative", flex: 1, width: "100%" }}>
+                <select
+                  multiple
+                  value={formData.equipmentIds || []}
+                  onChange={handleEquipmentChange}
+                  style={{ 
+                    width: "100%", 
+                    minHeight: "120px", 
+                    background: "rgba(5, 10, 20, 0.4)",
+                    border: "1px solid rgba(144, 224, 239, 0.15)",
+                    borderRadius: "8px",
+                    color: "#caf0f8",
+                    padding: "8px"
+                  }}
+                >
+                  {availableEquipment.length === 0 && (
+                    <option disabled>No equipment registered. Add gear in Equipment Locker first.</option>
+                  )}
+                  {availableEquipment.map(eq => (
+                    <option key={eq.id} value={eq.id}>
+                      {eq.name} ({eq.category}) {eq.requiresService ? "⚠️ Service Due" : ""}
+                    </option>
+                  ))}
+                </select>
+                <small style={{ color: '#64748b', fontSize: '11px', display: 'block', marginTop: '5px' }}>
+                  Hold Ctrl/Cmd to select multiple items
+                </small>
+              </div>
+            ) : (
+              <span className="value">{selectedEquipmentNames}</span>
+            )}
+          </div>
         </div>
 
         <div className="info-card">

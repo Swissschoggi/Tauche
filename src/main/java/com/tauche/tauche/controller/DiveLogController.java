@@ -2,7 +2,10 @@ package com.tauche.tauche.controller;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -23,9 +26,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.tauche.tauche.dto.DiveLogDTO;
 import com.tauche.tauche.model.DiveLog;
 import com.tauche.tauche.model.Diver;
+import com.tauche.tauche.model.Equipment;
 import com.tauche.tauche.repository.DiverRepository;
+import com.tauche.tauche.repository.EquipmentRepository;
 import com.tauche.tauche.service.DiveLogService;
 import com.tauche.tauche.service.FileService;
 
@@ -42,6 +48,7 @@ public class DiveLogController {
     private final DiveLogService service;
     private final FileService fileService;
     private final DiverRepository diverRepository;
+    private final EquipmentRepository equipmentRepository;
 
     @InitBinder
     public void initBinder(WebDataBinder binder) {
@@ -59,65 +66,122 @@ public class DiveLogController {
 
     @GetMapping
     @Transactional(readOnly = true)
-    public ResponseEntity<List<DiveLog>> getAll(Authentication authentication) {
+    public ResponseEntity<List<DiveLogDTO>> getAll(Authentication authentication) {
         if (authentication == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 
         String userEmail = authentication.getName();
         Diver diver = diverRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Authenticated diver profile missing"));
 
-        return ResponseEntity.ok(service.getByDiverId(diver.getId()));
+        List<DiveLog> dives = service.getByDiverId(diver.getId());
+        
+        List<DiveLogDTO> diveDTOs = dives.stream()
+                .map(DiveLogDTO::fromEntity)
+                .toList();
+        
+        return ResponseEntity.ok(diveDTOs);
     }
 
     @GetMapping("/{id}")
     @Transactional(readOnly = true)
-    public ResponseEntity<DiveLog> getById(@PathVariable Long id, Authentication authentication) {
+    public ResponseEntity<DiveLogDTO> getById(@PathVariable Long id, Authentication authentication) {
         if (authentication == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 
         return service.findById(id)
                 .map(diveLog -> {
-                    // This line previously crashed because the session was closed
                     if (!diveLog.getDiver().getEmail().equals(authentication.getName())) {
-                        return ResponseEntity.status(HttpStatus.FORBIDDEN).<DiveLog>build();
+                        return ResponseEntity.status(HttpStatus.FORBIDDEN).<DiveLogDTO>build();
                     }
-                    return ResponseEntity.ok(diveLog);
+                    DiveLogDTO dto = DiveLogDTO.fromEntity(diveLog);
+                    return ResponseEntity.ok(dto);
                 })
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
     @Transactional
-    public ResponseEntity<DiveLog> create(@RequestBody DiveLog diveLog, Authentication authentication) {
+    public ResponseEntity<DiveLogDTO> create(@RequestBody DiveLogDTO diveLogDTO, Authentication authentication) {
         if (authentication == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 
         String userEmail = authentication.getName();
         Diver diver = diverRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Authenticated diver profile missing"));
 
+        DiveLog diveLog = diveLogDTO.toEntity();
         diveLog.setDiver(diver);
-        return ResponseEntity.ok(service.create(diveLog));
+        
+        if (diveLogDTO.getEquipmentIds() != null && !diveLogDTO.getEquipmentIds().isEmpty()) {
+            Set<Equipment> equipmentSet = new HashSet<>();
+            for (Long eqId : diveLogDTO.getEquipmentIds()) {
+                equipmentRepository.findById(eqId).ifPresent(equipmentSet::add);
+            }
+            diveLog.setEquipmentUsed(equipmentSet);
+        }
+        
+        DiveLog saved = service.create(diveLog);
+        
+        return ResponseEntity.ok(DiveLogDTO.fromEntity(saved));
     }
 
     @PutMapping("/{id}")
     @Transactional
-    public ResponseEntity<DiveLog> update(
+    public ResponseEntity<DiveLogDTO> update(
             @PathVariable Long id,
-            @RequestBody DiveLog diveLog,
+            @RequestBody DiveLogDTO diveLogDTO,
             Authentication authentication
     ) {
         if (authentication == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 
+        log.info("=== UPDATE REQUEST ===");
+        log.info("Dive ID: {}", id);
+        log.info("Equipment IDs from frontend: {}", diveLogDTO.getEquipmentIds());
+
         return service.findById(id)
                 .map(existingDive -> {
-                    // Accessing .getDiver() here is now safe because of @Transactional
                     if (!existingDive.getDiver().getEmail().equals(authentication.getName())) {
-                        return ResponseEntity.status(HttpStatus.FORBIDDEN).<DiveLog>build();
+                        return ResponseEntity.status(HttpStatus.FORBIDDEN).<DiveLogDTO>build();
                     }
-                    if (diveLog.getImagePath() == null || diveLog.getImagePath().trim().isEmpty()) {
-                        diveLog.setImagePath(existingDive.getImagePath());
+                    
+                    existingDive.setDiveTitle(diveLogDTO.getDiveTitle());
+                    existingDive.setDate(diveLogDTO.getDate());
+                    existingDive.setLocation(diveLogDTO.getLocation());
+                    existingDive.setLatitude(diveLogDTO.getLatitude());
+                    existingDive.setLongitude(diveLogDTO.getLongitude());
+                    existingDive.setDiveType(diveLogDTO.getDiveType());
+                    existingDive.setDivePurpose(diveLogDTO.getDivePurpose());
+                    existingDive.setDiveSite(diveLogDTO.getDiveSite());
+                    existingDive.setDepthMeters(diveLogDTO.getDepthMeters());
+                    existingDive.setCylinderVolumeLiters(diveLogDTO.getCylinderVolumeLiters());
+                    existingDive.setDurationMinutes(diveLogDTO.getDurationMinutes());
+                    existingDive.setWaterTemperatureCelsius(diveLogDTO.getWaterTemperatureCelsius());
+                    existingDive.setVisibilityMeters(diveLogDTO.getVisibilityMeters());
+                    existingDive.setWaterType(diveLogDTO.getWaterType());
+                    existingDive.setWeather(diveLogDTO.getWeather());
+                    existingDive.setSuit(diveLogDTO.getSuit());
+                    existingDive.setWeightKg(diveLogDTO.getWeightKg());
+                    existingDive.setGas(diveLogDTO.getGas());
+                    existingDive.setPressureStartBar(diveLogDTO.getPressureStartBar());
+                    existingDive.setPressureEndBar(diveLogDTO.getPressureEndBar());
+                    existingDive.setBuddy(diveLogDTO.getBuddy());
+                    existingDive.setDiveCenter(diveLogDTO.getDiveCenter());
+                    existingDive.setNotes(diveLogDTO.getNotes());
+                    
+                    if (diveLogDTO.getImagePath() != null && !diveLogDTO.getImagePath().isEmpty()) {
+                        existingDive.setImagePath(diveLogDTO.getImagePath());
                     }
-                    diveLog.setDiver(existingDive.getDiver());
-                    return ResponseEntity.ok(service.update(id, diveLog));
+                    
+                    Set<Equipment> equipmentSet = new LinkedHashSet<>(); 
+                    if (diveLogDTO.getEquipmentIds() != null && !diveLogDTO.getEquipmentIds().isEmpty()) {
+                        for (Long eqId : diveLogDTO.getEquipmentIds()) {
+                            equipmentRepository.findById(eqId).ifPresent(equipmentSet::add);
+                        }
+                    }
+                   existingDive.setEquipmentUsed(equipmentSet);
+                    log.info("Set equipment with {} items", equipmentSet.size());
+                    
+                    DiveLog updated = service.update(id, existingDive);
+                    
+                    return ResponseEntity.ok(DiveLogDTO.fromEntity(updated));
                 })
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -140,7 +204,7 @@ public class DiveLogController {
 
     @PostMapping(value = "/{id}/upload-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Transactional
-    public ResponseEntity<DiveLog> uploadImage(
+    public ResponseEntity<DiveLogDTO> uploadImage(
             @PathVariable Long id,
             @RequestParam("image") MultipartFile image,
             Authentication authentication
@@ -151,21 +215,22 @@ public class DiveLogController {
         return service.findById(id)
                 .map(existingDive -> {
                     if (!existingDive.getDiver().getEmail().equals(authentication.getName())) {
-                        return ResponseEntity.status(HttpStatus.FORBIDDEN).<DiveLog>build();
+                        return ResponseEntity.status(HttpStatus.FORBIDDEN).<DiveLogDTO>build();
                     }
                     if (image == null || image.isEmpty()) {
-                        return ResponseEntity.badRequest().<DiveLog>build();
+                        return ResponseEntity.badRequest().<DiveLogDTO>build();
                     }
                     try {
                         String path = fileService.storeImage(image);
                         existingDive.setImagePath(path);
-                        return ResponseEntity.ok(service.update(id, existingDive));
+                        DiveLog updated = service.update(id, existingDive);
+                        return ResponseEntity.ok(DiveLogDTO.fromEntity(updated));
                     } catch (IllegalArgumentException e) {
                         log.warn("Rejected upload for dive {}: {}", id, e.getMessage());
-                        return ResponseEntity.badRequest().<DiveLog>build();
+                        return ResponseEntity.badRequest().<DiveLogDTO>build();
                     } catch (Exception e) {
                         log.error("Image storage failure for dive {}: ", id, e);
-                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).<DiveLog>build();
+                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).<DiveLogDTO>build();
                     }
                 })
                 .orElse(ResponseEntity.notFound().build());

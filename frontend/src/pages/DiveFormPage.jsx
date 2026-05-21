@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useNavigate, useParams } from "react-router-dom"
-import { createDive, updateDive, getDiveById } from "../api/diveApi"
+import { createDive, updateDive, getDiveById, getEquipmentCloset } from "../api/diveApi" // Add getEquipmentCloset
 import { diveFormSchema } from "../form/diveFormSchema"
 import { Settings } from "lucide-react"
 import "./DiveFormPage.css"
@@ -13,7 +13,7 @@ export default function DiveFormPage() {
   const [form, setForm] = useState(() => {
     const initialState = {}
     diveFormSchema.forEach((field) => {
-      initialState[field.name] = ""
+      initialState[field.name] = field.type === "multiselect" ? [] : ""
     })
     initialState.latitude = null
     initialState.longitude = null
@@ -25,6 +25,22 @@ export default function DiveFormPage() {
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formError, setFormError] = useState("")
+  
+  // Add state for equipment list
+  const [availableEquipment, setAvailableEquipment] = useState([])
+
+  // Load equipment list on mount
+  useEffect(() => {
+    async function loadEquipment() {
+      try {
+        const equipment = await getEquipmentCloset()
+        setAvailableEquipment(Array.isArray(equipment) ? equipment : [])
+      } catch (err) {
+        console.error("Failed to load equipment:", err)
+      }
+    }
+    loadEquipment()
+  }, [])
 
   useEffect(() => {
     if (!id) return
@@ -32,7 +48,13 @@ export default function DiveFormPage() {
     async function loadDive() {
       try {
         const res = await getDiveById(id)
-        const sanitizedData = { ...res } 
+        const sanitizedData = { ...res }
+        
+        // Extract equipment IDs from the loaded dive
+        if (sanitizedData.equipmentUsed && Array.isArray(sanitizedData.equipmentUsed)) {
+          sanitizedData.equipmentIds = sanitizedData.equipmentUsed.map(eq => eq.id)
+        }
+        
         Object.keys(sanitizedData).forEach(key => {
           if (sanitizedData[key] === null) sanitizedData[key] = ""
         })
@@ -46,6 +68,7 @@ export default function DiveFormPage() {
     loadDive()
   }, [id])
 
+  // Rest of your existing useEffect for location suggestions...
   useEffect(() => {
     if (!form.location || form.location.trim().length < 3) {
       setSuggestions([])
@@ -90,11 +113,23 @@ export default function DiveFormPage() {
     }))
   }
 
+  // Handle multi-select for equipment
+  function handleEquipmentChange(e) {
+    const selectedOptions = Array.from(e.target.selectedOptions)
+    const selectedIds = selectedOptions.map(option => parseInt(option.value))
+    setForm(prev => ({ ...prev, equipmentIds: selectedIds }))
+  }
+
   function processPayload() {
     const cleanData = {}
     Object.keys(form).forEach((key) => {
       const val = form[key]
-      if (val !== "" && val !== undefined && val !== null) {
+      if (key === "equipmentIds") {
+        // Keep equipmentIds as array for the backend
+        if (val && val.length > 0) {
+          cleanData[key] = val
+        }
+      } else if (val !== "" && val !== undefined && val !== null) {
         cleanData[key] = val
       }
     })
@@ -137,9 +172,38 @@ export default function DiveFormPage() {
 
         <form onSubmit={handleSubmit} noValidate>
           {diveFormSchema.map((field) => {
-            // Explicitly evaluate if field is a descriptive text block or long-string location
-            const isTextArea = field.type === "textarea" || field.name === "notes" || field.name === "comments";
-            const isFullWidth = isTextArea || field.name === "location" || field.type === "file";
+            const isTextArea = field.type === "textarea" || field.name === "notes"
+            const isFullWidth = isTextArea || field.name === "location" || field.type === "file" || field.name === "equipmentIds"
+
+            // Special handling for equipment multi-select
+            if (field.name === "equipmentIds") {
+              return (
+                <div key={field.name} className="form-group full-width-group">
+                  <label htmlFor={field.name}>{field.label}</label>
+                  <select
+                    id={field.name}
+                    name={field.name}
+                    multiple
+                    value={form.equipmentIds || []}
+                    onChange={handleEquipmentChange}
+                    disabled={isSubmitting}
+                    style={{ minHeight: "120px" }}
+                  >
+                    {availableEquipment.length === 0 && (
+                      <option disabled>No equipment registered. Add gear in Equipment Locker first.</option>
+                    )}
+                    {availableEquipment.map(eq => (
+                      <option key={eq.id} value={eq.id}>
+                        {eq.name} ({eq.category}) {eq.requiresService ? "⚠️ Service Due" : ""}
+                      </option>
+                    ))}
+                  </select>
+                  <small style={{ color: '#64748b', fontSize: '11px' }}>
+                    Hold Ctrl/Cmd to select multiple items. Equipment usage will count toward service intervals.
+                  </small>
+                </div>
+              )
+            }
 
             return (
               <div 

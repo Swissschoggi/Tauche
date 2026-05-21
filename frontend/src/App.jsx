@@ -9,6 +9,8 @@ import RegisterPage from "./pages/RegisterPage"
 import ProtectedRoute from "./components/ProtectedRoute"
 import ProfilePage from "./pages/ProfilePage"
 import SettingsPage from "./pages/SettingsPage"
+import CertificationPage from "./pages/CertificationPage"
+import EquipmentPage from "./pages/EquipmentPage"
 
 function App() {
   return (
@@ -25,6 +27,8 @@ function App() {
         <Route path="/analytics" element={<ProtectedRoute><AnalyticsPage /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+        <Route path="/certification" element={<ProtectedRoute><CertificationPage /></ProtectedRoute>} />
+        <Route path="/equipment" element={<ProtectedRoute><EquipmentPage /></ProtectedRoute>} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
 

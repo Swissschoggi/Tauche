@@ -1,14 +1,17 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { getAllDives } from "../api/diveApi"
-import { calculateSAC } from "../components/diveCalculations"
-import { TrendingUp, Activity, Settings, Droplets } from "lucide-react"
+import { calculateSAC } from "../components/DiveCalculations"
+import { TrendingUp, Activity, Settings, Droplets, Trophy, Clock, ShieldAlert } from "lucide-react"
 import "./AnalyticsPage.css"
 
 export default function AnalyticsPage() {
   const navigate = useNavigate()
   const [dives, setDives] = useState([])
   const [hoveredNode, setHoveredNode] = useState(null)
+
+  const localMetricSetting = localStorage.getItem("useMetric")
+  const isMetric = localMetricSetting !== null ? JSON.parse(localMetricSetting) : true
 
   useEffect(() => {
     async function loadHistory() {
@@ -36,6 +39,23 @@ export default function AnalyticsPage() {
     ? (validSacValues.reduce((sum, val) => sum + val, 0) / validSacValues.length).toFixed(2)
     : "N/A"
 
+  const deepestDive = dives.length 
+    ? [...dives].sort((a, b) => Number(b.depthMeters) - Number(a.depthMeters))[0] 
+    : null
+
+  const longestDive = dives.length 
+    ? [...dives].sort((a, b) => Number(b.durationMinutes) - Number(a.durationMinutes))[0] 
+    : null
+
+  const lowestSacDive = dives.length
+    ? [...dives]
+        .filter((d) => {
+          const s = parseFloat(calculateSAC(d))
+          return !isNaN(s) && s > 0
+        })
+        .sort((a, b) => parseFloat(calculateSAC(a)) - parseFloat(calculateSAC(b)))[0]
+    : null
+
   const width = 600
   const height = 220
   const paddingX = 50
@@ -52,6 +72,11 @@ export default function AnalyticsPage() {
 
   const linePath = points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x},${p.y}`).join(" ")
   const areaPath = points.length ? `${linePath} L ${points[points.length - 1].x},${height - paddingY} L ${points[0].x},${height - paddingY} Z` : ""
+
+  function displayDepth(meters) {
+    if (!meters) return "-"
+    return isMetric ? `${meters}m` : `${Math.round(meters * 3.28084)}ft`
+  }
 
   return (
     <div className="analytics-page">
@@ -75,14 +100,14 @@ export default function AnalyticsPage() {
             <TrendingUp size={18} /> 
             <div>
               <span className="pill-label">Max Depth</span>
-              <span className="pill-val">{maxDepth}m</span>
+              <span className="pill-val">{displayDepth(maxDepth)}</span>
             </div>
           </div>
           <div className="stat-pill">
             <TrendingUp size={18} /> 
             <div>
               <span className="pill-label">Avg Depth</span>
-              <span className="pill-val">{avgDepth}m</span>
+              <span className="pill-val">{displayDepth(avgDepth)}</span>
             </div>
           </div>
           <div className="stat-pill highlight-sac-pill">
@@ -120,13 +145,56 @@ export default function AnalyticsPage() {
                 <div className="chart-live-tooltip" style={{ left: `${(hoveredNode.x / width) * 100}%`, top: `${(hoveredNode.y / height) * 100}%` }}>
                   <div className="tooltip-title">🤿 {hoveredNode.diveTitle}</div>
                   <div className="tooltip-row">📍 {hoveredNode.location?.split(",")[0]}</div>
-                  <div className="tooltip-meta"><span>📅 {hoveredNode.date}</span> <span className="highlight-depth">📉 {hoveredNode.depthMeters}m</span></div>
+                  <div className="tooltip-meta"><span>📅 {hoveredNode.date}</span> <span className="highlight-depth">📉 {displayDepth(hoveredNode.depthMeters)}</span></div>
                   <div className="tooltip-sac"><Droplets size={14} /> SAC Rate: {calculateSAC(hoveredNode) || "N/A"} bar/min</div>
                 </div>
               )}
             </div>
           )}
         </div>
+
+        <div className="analytics-card records-card-section" style={{ marginTop: "24px" }}>
+          <h3>🏆 Personal Milestone Records</h3>
+          {dives.length === 0 ? (
+            <div className="empty-chart-state"><p>No log records compiled yet. Personal achievements will populate here.</p></div>
+          ) : (
+            <div className="records-grid-layout" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "16px", marginTop: "16px" }}>
+              
+              <div className="record-item-pill" onClick={() => navigate(`/dives/${deepestDive.id}`)} style={{ background: "rgba(30, 41, 59, 0.4)", border: "1px solid rgba(56, 189, 248, 0.15)", borderRadius: "12px", padding: "16px", cursor: "pointer", transition: "transform 0.2s" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
+                  <Trophy size={18} style={{ color: "#fbbf24" }} />
+                  <span style={{ fontSize: "12px", color: "#94a3b8", fontWeight: "600", textTransform: "uppercase" }}>Deepest Dive</span>
+                </div>
+                <div style={{ fontSize: "20px", fontWeight: "700", color: "#f8fafc" }}>{displayDepth(deepestDive?.depthMeters)}</div>
+                <div style={{ fontSize: "13px", color: "#38bdf8", marginTop: "4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{deepestDive?.diveTitle || "Untitled Log"}</div>
+              </div>
+
+              <div className="record-item-pill" onClick={() => navigate(`/dives/${longestDive.id}`)} style={{ background: "rgba(30, 41, 59, 0.4)", border: "1px solid rgba(56, 189, 248, 0.15)", borderRadius: "12px", padding: "16px", cursor: "pointer", transition: "transform 0.2s" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
+                  <Clock size={18} style={{ color: "#34d399" }} />
+                  <span style={{ fontSize: "12px", color: "#94a3b8", fontWeight: "600", textTransform: "uppercase" }}>Longest Bottom Time</span>
+                </div>
+                <div style={{ fontSize: "20px", fontWeight: "700", color: "#f8fafc" }}>{longestDive?.durationMinutes} mins</div>
+                <div style={{ fontSize: "13px", color: "#34d399", marginTop: "4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{longestDive?.diveTitle || "Untitled Log"}</div>
+              </div>
+
+              <div className="record-item-pill" onClick={() => lowestSacDive ? navigate(`/dives/${lowestSacDive.id}`) : null} style={{ background: "rgba(30, 41, 59, 0.4)", border: "1px solid rgba(56, 189, 248, 0.15)", borderRadius: "12px", padding: "16px", cursor: lowestSacDive ? "pointer" : "default", transition: "transform 0.2s" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
+                  <Droplets size={18} style={{ color: "#60a5fa" }} />
+                  <span style={{ fontSize: "12px", color: "#94a3b8", fontWeight: "600", textTransform: "uppercase" }}>Most Efficient SAC</span>
+                </div>
+                <div style={{ fontSize: "20px", fontWeight: "700", color: "#f8fafc" }}>
+                  {lowestSacDive ? `${calculateSAC(lowestSacDive)} bar/min` : "N/A"}
+                </div>
+                <div style={{ fontSize: "13px", color: "#60a5fa", marginTop: "4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {lowestSacDive ? lowestSacDive.diveTitle : "Gas telemetry missing"}
+                </div>
+              </div>
+
+            </div>
+          )}
+        </div>
+
       </div>
     </div>
   )

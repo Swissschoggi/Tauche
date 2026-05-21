@@ -146,3 +146,16 @@
   min-width: 160px;
   max-width: 220px;
 }
+
+@media (max-width: 640px) {
+  .back-dashboard-global-btn, 
+  .nav-settings-global-btn {
+    top: 12px;
+  }
+  .nav-settings-global-btn {
+    right: 12px;
+  }
+  .back-dashboard-global-btn {
+    left: 12px;
+  }
+}

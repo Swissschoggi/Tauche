@@ -38,5 +38,7 @@ export const diveFormSchema = [
   name: "cylinderVolumeLiters",
   label: "Cylinder Volume (L)",
   type: "number",
-  }
+  },
+
+  { name: "equipmentIds", label: "Equipment Used", type: "multiselect" }
 ];

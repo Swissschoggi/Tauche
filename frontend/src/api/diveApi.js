@@ -76,3 +76,25 @@ export async function getImageUrl(imagePath) {
   if (!imagePath) return null;
   return `${backendBaseUrl}${imagePath}`;
 }
+
+export async function getEquipmentCloset() {
+  try {
+    const response = await api.get("/api/equipment");
+    console.log("Equipment API response:", response); 
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching equipment closet:", error);
+    return [];
+  }
+}
+
+export async function addEquipmentItem(equipmentData) {
+  const response = await api.post("/api/equipment", equipmentData);
+  console.log("Add equipment response:", response);
+  return response.data;
+}
+
+export async function removeEquipmentItem(id) {
+  const response = await api.delete(`/api/equipment/${id}`);
+  return response.data;
+}

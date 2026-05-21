@@ -1,7 +1,15 @@
+:root {
+  --bg-slate-900: #020617;
+  --text-slate-100: #f8fafc;
+  --text-slate-400: #94a3b8;
+  --cyan-accent: #90e0ef;
+  --deep-blue: #0077b6;
+}
+
 body {
   margin: 0;
   background: radial-gradient(circle at top, #1e3a8a 0%, #0f172a 35%, #020617 100%);
-  color: var(--text);
+  color: var(--text-slate-100);
   font-family: 'Inter', system-ui, sans-serif;
 }
 
@@ -19,108 +27,204 @@ body::before {
   min-height: 100vh;
 }
 
-.page {
+.dive-list-page {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 32px;
+  padding: 40px 24px;
+  box-sizing: border-box;
 }
 
-.header button {
-  border-radius: 10px;
-  font-weight: 600;
-  box-shadow: 0 6px 20px rgba(56,189,248,0.2);
-}
-
+/* --- Header & Layout System --- */
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 28px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  margin-bottom: 32px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .header h1 {
   font-size: 28px;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 0.5px;
+  margin: 0;
+  background: linear-gradient(135deg, #ffffff 40%, var(--cyan-accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-button {
-  background: var(--accent);
-  color: #0f172a;
-  border: none;
-  padding: 10px 16px;
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* --- Standardized Action Buttons System --- */
+.btn-primary-action,
+.btn-dashboard-nav,
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px;
   border-radius: 10px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
+  white-space: nowrap;
+  box-sizing: border-box;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.dive-content {
-  padding: 18px;
+/* New Log Button Style Override */
+.btn-primary-action {
+  background: linear-gradient(135deg, var(--cyan-accent), var(--deep-blue));
+  color: #020617;
+  border: none;
+  box-shadow: 0 4px 14px rgba(144, 224, 239, 0.2);
 }
 
-.dive-content h3 {
-  margin: 0 0 8px;
-  font-size: 20px;
+.btn-primary-action:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(144, 224, 239, 0.35);
 }
 
-.location {
-  color: var(--muted);
-  margin-bottom: 14px;
+/* Unified Navigation Buttons Style Override */
+.btn-dashboard-nav {
+  background: rgba(255, 255, 255, 0.05);
+  color: #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.dive-meta {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+.btn-dashboard-nav:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(144, 224, 239, 0.3);
+  color: #ffffff;
 }
 
-.dive-meta span {
-  background: #0f172a;
-  padding: 6px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  color: var(--text);
+/* Square layout behavior for isolated profile icons */
+.btn-dashboard-nav.profile-btn {
+  padding: 0;
+  width: 40px;
 }
 
-.dive-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 24px;
-  margin-top: 10px;
+/* Unified Danger/Deletion Buttons */
+.btn-danger {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.btn-danger:hover {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+/* --- Media Breakpoint Overhaul --- */
+@media (max-width: 1024px) {
+  .header {
+    flex-direction: column;
+    gap: 20px;
+    align-items: flex-start;
+  }
+
+  .header-actions {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .btn-dashboard-nav, 
+  .btn-primary-action,
+  .btn-danger {
+    flex: 1 1 calc(33.33% - 8px);
+  }
+}
+
+@media (max-width: 640px) {
+  .btn-dashboard-nav, 
+  .btn-primary-action,
+  .btn-danger {
+    flex: 1 1 calc(50% - 8px);
+  }
 }
 
 .dive-card {
   position: relative;
-  background: rgba(17, 24, 39, 0.88);
-  border-radius: 20px;
+  background: rgba(17, 24, 39, 0.85);
+  border-radius: 18px;
   overflow: hidden;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  transition: all 0.25s ease;
   border: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
-  backdrop-filter: blur(10px);
-}
-
-.dive-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(144, 224, 239, 0.1) 0%, transparent 50%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  pointer-events: none;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
 }
 
 .dive-card:hover {
-  transform: translateY(-6px) scale(1.01);
-  border-color: rgba(144, 224, 239, 0.35);
-  box-shadow: 0 20px 40px rgba(0, 119, 182, 0.2);
+  transform: translateY(-6px);
+  border-color: rgba(56, 189, 248, 0.4);
 }
 
-.dive-card:hover::before {
-  opacity: 1;
+.dive-card-actions {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  left: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 10;
+}
+
+.checkbox {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+}
+
+.checkbox.checked {
+  background: #38bdf8;
+  border-color: #38bdf8;
+  color: #0f172a;
+}
+
+.delete-single-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.8);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+  color: white;
+  padding: 0;
+}
+
+.delete-single-btn:hover {
+  background: #ef4444;
+  transform: scale(1.05);
+}
+
+.dive-image-wrapper {
+  position: relative;
+  overflow: hidden;
 }
 
 .dive-image {
@@ -128,6 +232,11 @@ button {
   height: 240px;
   object-fit: cover;
   display: block;
+  transition: transform 0.3s ease;
+}
+
+.dive-card:hover .dive-image {
+  transform: scale(1.05);
 }
 
 .dive-info {
@@ -135,118 +244,54 @@ button {
 }
 
 .dive-info h3 {
-  margin: 0;
-  font-size: 22px;
-  font-weight: 700;
-  color: #f8fafc;
+  font-size: 20px;
+  margin-bottom: 6px;
 }
 
 .location {
-  margin-top: 8px;
   color: var(--muted);
   font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.dive-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .dive-tags span {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.05);
-  color: var(--text);
-  padding: 6px 11px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 5px 10px;
   border-radius: 999px;
   font-size: 12px;
-}
-
-.dive-image-wrapper {
-  position: relative;
-}
-
-.dive-image-wrapper::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgba(17,24,39,0.9) 0%, rgba(17,24,39,0) 40%);
-}
-
-.dive-list-page {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 40px 24px;
+  color: var(--muted);
 }
 
 .empty-state {
   text-align: center;
   padding: 60px 20px;
-  color: rgba(148,163,184,0.8);
+  background: rgba(17, 24, 39, 0.6);
+  border-radius: 24px;
+  border: 1px dashed rgba(144, 224, 239, 0.2);
+  color: var(--muted);
 }
 
-.header-actions {
-  display: flex;
-  gap: 10px;
-}
-
-.btn-secondary {
-  background: rgba(255, 255, 255, 0.08);
-  color: #e2e8f0;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-.btn-danger {
-  background: #ef4444;
-  color: white;
-}
-
-.dive-card.selected {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.4);
-}
-
-.checkbox {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  border: 2px solid var(--accent);
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-  color: var(--accent);
-  z-index: 10;
-}
-
-.checkbox.checked {
-  background: var(--accent);
-  color: #0f172a;
-}
-
-.dive-card {
-  position: relative;
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-@media (max-width: 768px) {
-  .header {
-    flex-direction: column;
-    gap: 16px;
-    align-items: flex-start;
+@media (max-width: 640px) {
+  .dive-image {
+    height: 180px;
   }
-
-  .header-actions {
-    flex-wrap: wrap;
-    justify-content: flex-start;
-    width: 100%;
+  
+  .dive-card-actions {
+    top: 8px;
+    right: 8px;
+    left: 8px;
   }
-
-  .header-actions button {
-    flex: 1 1 calc(50% - 10px);
-    margin-bottom: 8px;
+  
+  .checkbox, .delete-single-btn {
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
   }
 }

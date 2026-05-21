@@ -1,8 +1,16 @@
-# Tauche, Dive Logbook & Telemetry Analytics Suite
+# Tauche - Dive Logbook & Telemetry Analytics Suite
+
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-tauche.onrender.com-38bdf8?style=for-the-badge&logo=render&logoColor=white)](https://tauche.onrender.com)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0.6-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
+[![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white)](https://reactjs.org)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org)
 
 **Tauche** *(Swiss German for “diving”)* is a modern full-stack web application for logging, managing, and analyzing scuba dives.  
-It combines detailed dive logging with interactive telemetry visualization, geospatial mapping, and an automated media upload pipeline.
-As a disclaimer, I partially vibecoded this, due to time constraints and lack of knowledge. I am always happy if people can help me improve both my skills and this app by opening issues :)
+It combines detailed dive logging with interactive telemetry visualization, 3D geospatial mapping, equipment service tracking, and automated media upload.
+
+> **Live Demo**: [https://tauche.onrender.com](https://tauche.onrender.com)
+> 
+> *Note: The free tier may take up to 30 seconds to wake up on first visit.*
 
 ---
 

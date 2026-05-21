@@ -1,8 +1,9 @@
 import { useEffect, useState, useRef } from "react"
 import { useNavigate, useParams } from "react-router-dom"
-import { createDive, updateDive, getDiveById, getEquipmentCloset } from "../api/diveApi" // Add getEquipmentCloset
+import { createDive, updateDive, getDiveById, getEquipmentCloset } from "../api/diveApi"
 import { diveFormSchema } from "../form/diveFormSchema"
 import { Settings } from "lucide-react"
+import { TANK_PRESETS } from '../constants/tankPresets'
 import "./DiveFormPage.css"
 
 export default function DiveFormPage() {
@@ -25,11 +26,9 @@ export default function DiveFormPage() {
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formError, setFormError] = useState("")
-  
-  // Add state for equipment list
   const [availableEquipment, setAvailableEquipment] = useState([])
+  const [showTankPresets, setShowTankPresets] = useState(false)
 
-  // Load equipment list on mount
   useEffect(() => {
     async function loadEquipment() {
       try {
@@ -43,6 +42,16 @@ export default function DiveFormPage() {
   }, [])
 
   useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showTankPresets && !event.target.closest('.tank-presets-container')) {
+        setShowTankPresets(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showTankPresets])
+
+  useEffect(() => {
     if (!id) return
 
     async function loadDive() {
@@ -50,7 +59,6 @@ export default function DiveFormPage() {
         const res = await getDiveById(id)
         const sanitizedData = { ...res }
         
-        // Extract equipment IDs from the loaded dive
         if (sanitizedData.equipmentUsed && Array.isArray(sanitizedData.equipmentUsed)) {
           sanitizedData.equipmentIds = sanitizedData.equipmentUsed.map(eq => eq.id)
         }
@@ -68,7 +76,6 @@ export default function DiveFormPage() {
     loadDive()
   }, [id])
 
-  // Rest of your existing useEffect for location suggestions...
   useEffect(() => {
     if (!form.location || form.location.trim().length < 3) {
       setSuggestions([])
@@ -113,7 +120,6 @@ export default function DiveFormPage() {
     }))
   }
 
-  // Handle multi-select for equipment
   function handleEquipmentChange(e) {
     const selectedOptions = Array.from(e.target.selectedOptions)
     const selectedIds = selectedOptions.map(option => parseInt(option.value))
@@ -125,7 +131,6 @@ export default function DiveFormPage() {
     Object.keys(form).forEach((key) => {
       const val = form[key]
       if (key === "equipmentIds") {
-        // Keep equipmentIds as array for the backend
         if (val && val.length > 0) {
           cleanData[key] = val
         }
@@ -175,7 +180,6 @@ export default function DiveFormPage() {
             const isTextArea = field.type === "textarea" || field.name === "notes"
             const isFullWidth = isTextArea || field.name === "location" || field.type === "file" || field.name === "equipmentIds"
 
-            // Special handling for equipment multi-select
             if (field.name === "equipmentIds") {
               return (
                 <div key={field.name} className="form-group full-width-group">
@@ -201,6 +205,79 @@ export default function DiveFormPage() {
                   <small style={{ color: '#64748b', fontSize: '11px' }}>
                     Hold Ctrl/Cmd to select multiple items. Equipment usage will count toward service intervals.
                   </small>
+                </div>
+              )
+            }
+
+            if (field.name === "cylinderVolumeLiters") {
+              return (
+                <div key={field.name} className="form-group tank-presets-container" style={{ position: 'relative' }}>
+                  <label htmlFor={field.name}>{field.label}</label>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <input
+                      type="number"
+                      id={field.name}
+                      name={field.name}
+                      value={form[field.name] || ""}
+                      onChange={handleChange}
+                      disabled={isSubmitting}
+                      step="0.1"
+                      style={{ flex: 1 }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowTankPresets(!showTankPresets)}
+                      style={{ 
+                        padding: '8px 12px', 
+                        background: 'rgba(56,189,248,0.2)',
+                        border: '1px solid rgba(56,189,248,0.3)',
+                        whiteSpace: 'nowrap',
+                        borderRadius: '10px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      📦 Presets
+                    </button>
+                  </div>
+                  {showTankPresets && (
+                    <div className="tank-presets-dropdown" style={{ 
+                      position: 'absolute', 
+                      top: '100%', 
+                      left: 0,
+                      right: 0,
+                      marginTop: '4px',
+                      background: '#1e293b',
+                      border: '1px solid rgba(56,189,248,0.3)',
+                      borderRadius: '12px',
+                      zIndex: 1000,
+                      maxHeight: '250px',
+                      overflowY: 'auto',
+                      boxShadow: '0 10px 25px rgba(0,0,0,0.3)'
+                    }}>
+                      {Object.entries(TANK_PRESETS).map(([key, preset]) => (
+                        <div
+                          key={key}
+                          style={{
+                            padding: '10px 16px',
+                            cursor: 'pointer',
+                            borderBottom: '1px solid rgba(255,255,255,0.05)',
+                            transition: 'background 0.2s'
+                          }}
+                          onMouseDown={() => {
+                            setForm(prev => ({ ...prev, cylinderVolumeLiters: preset.volumeLiters }))
+                            setShowTankPresets(false)
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(56,189,248,0.1)'}
+                          onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                        >
+                          <div style={{ fontWeight: '600', color: '#f8fafc' }}>{preset.name}</div>
+                          <div style={{ fontSize: '11px', color: '#94a3b8' }}>
+                            {preset.volumeLiters}L @ {preset.workingPressureBar}bar - {preset.description}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )
             }

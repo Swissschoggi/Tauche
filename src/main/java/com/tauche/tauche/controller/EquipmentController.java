@@ -1,6 +1,7 @@
 package com.tauche.tauche.controller;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -66,6 +68,28 @@ public class EquipmentController {
         EquipmentDTO dto = equipmentService.convertToDTO(saved);
         log.info("Returning DTO with name: {}", dto.getName());
         
+        return ResponseEntity.ok(dto);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<EquipmentDTO> updateEquipmentItem(
+            @PathVariable Long id, 
+            @RequestBody Equipment item,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        log.info("=== UPDATE EQUIPMENT REQUEST ===");
+        log.info("Equipment ID: {}", id);
+        log.info("User email: {}", userDetails.getUsername());
+        
+        Diver diver = diverRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("Diver profile lookup failed"));
+        
+        Optional<Equipment> updated = equipmentService.updateEquipment(id, item, diver);
+        
+        if (updated.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        
+        EquipmentDTO dto = equipmentService.convertToDTO(updated.get());
         return ResponseEntity.ok(dto);
     }
 

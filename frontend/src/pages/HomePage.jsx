@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { getAllDives, deleteDive, getImageUrl } from "../api/diveApi"
-import { BarChart3, Map, Plus, User, Settings, Award, Wrench, Trash2 } from "lucide-react"
+import { BarChart3, Map, Plus, User, Settings, Award, Wrench, Trash2, Star } from "lucide-react"
+import { useFavorites } from '../hooks/useFavorites'
 import "./HomePage.css"
 
 export default function HomePage() {
@@ -9,6 +10,8 @@ export default function HomePage() {
   const [dives, setDives] = useState([])
   const [diveImages, setDiveImages] = useState({})
   const [selectedIds, setSelectedIds] = useState([])
+  
+  const { favoriteSites, toggleFavoriteSite } = useFavorites()
 
   useEffect(() => {
     async function load() {
@@ -57,7 +60,6 @@ export default function HomePage() {
     try {
       await deleteDive(id)
       setDives(prev => prev.filter(d => d.id !== id))
-      // Remove from selectedIds if it was selected
       setSelectedIds(prev => prev.filter(selectedId => selectedId !== id))
     } catch (err) {
       console.error("Failed to delete dive:", err)
@@ -112,6 +114,37 @@ export default function HomePage() {
         </div>
       </div>
 
+      {favoriteSites.length > 0 && (
+        <div className="favorites-filter-bar" style={{ 
+          marginBottom: '24px', 
+          padding: '12px 16px',
+          background: 'rgba(17, 24, 39, 0.6)',
+          borderRadius: '12px',
+          border: '1px solid rgba(251, 191, 36, 0.2)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          flexWrap: 'wrap'
+        }}>
+          <Star size={16} fill="#fbbf24" color="#fbbf24" />
+          <span style={{ fontSize: '13px', fontWeight: '600', color: '#fbbf24' }}>Favorite Sites:</span>
+          {favoriteSites.map(site => (
+            <span
+              key={site}
+              style={{
+                background: 'rgba(56, 189, 248, 0.1)',
+                padding: '4px 12px',
+                borderRadius: '20px',
+                fontSize: '12px',
+                color: '#94a3b8'
+              }}
+            >
+              {site.split(',')[0]}
+            </span>
+          ))}
+        </div>
+      )}
+
       {dives.length === 0 ? (
         <div className="empty-state">
           <p>No dives recorded yet. Click 'New Log' to add your first underwater trip.</p>
@@ -120,11 +153,14 @@ export default function HomePage() {
         <div className="dive-grid">
           {dives.map(d => {
             const isChecked = selectedIds.includes(d.id)
+            const isFavorite = d.location && favoriteSites.includes(d.location)
+            
             return (
               <div
                 key={d.id}
                 className={`dive-card ${isChecked ? "selected" : ""}`}
                 onClick={() => navigate(`/dives/${d.id}`)}
+                style={isFavorite ? { borderLeft: '3px solid #fbbf24' } : {}}
               >
                 <div className="dive-card-actions">
                   <div
@@ -151,7 +187,29 @@ export default function HomePage() {
                 </div>
 
                 <div className="dive-info">
-                  <h3>{d.diveTitle || "Untitled Expedition"}</h3>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h3>{d.diveTitle || "Untitled Expedition"}</h3>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        toggleFavoriteSite(d.location)
+                      }}
+                      style={{ 
+                        background: 'transparent', 
+                        padding: '4px',
+                        margin: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <Star 
+                        size={18} 
+                        fill={isFavorite ? '#fbbf24' : 'none'}
+                        color="#fbbf24"
+                      />
+                    </button>
+                  </div>
                   <p className="location">📍 {d.location || "Unknown Coordinates"}</p>
                   <div className="dive-tags">
                     {d.depthMeters && <span>{d.depthMeters}m</span>}

@@ -40,8 +40,6 @@ public class DiveLogService {
     public DiveLog update(Long id, DiveLog incomingData) {
         log.info("=== UPDATE SERVICE ===");
         log.info("Updating dive ID: {}", id);
-        log.info("Incoming equipment size: {}", 
-            incomingData.getEquipmentUsed() != null ? incomingData.getEquipmentUsed().size() : 0);
         
         DiveLog existing = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Target log entry missing: " + id));
@@ -67,16 +65,19 @@ public class DiveLogService {
         existing.setNotes(incomingData.getNotes());
         existing.setLatitude(incomingData.getLatitude());
         existing.setLongitude(incomingData.getLongitude());
+        existing.setShareToken(incomingData.getShareToken());
 
         if (incomingData.getImagePath() != null) {
             existing.setImagePath(incomingData.getImagePath());
         }
 
-        existing.setEquipmentUsed(incomingData.getEquipmentUsed());
-        log.info("After setting - existing equipment size: {}", existing.getEquipmentUsed().size());
+        if (incomingData.getEquipmentUsed() != null) {
+            existing.setEquipmentUsed(incomingData.getEquipmentUsed());
+            log.info("After setting - existing equipment size: {}", existing.getEquipmentUsed().size());
+        }
 
         DiveLog saved = repository.save(existing);
-        log.info("After save - saved equipment size: {}", saved.getEquipmentUsed().size());
+        log.info("After save - saved equipment size: {}", saved.getEquipmentUsed() != null ? saved.getEquipmentUsed().size() : 0);
         
         return saved;
     }
@@ -88,5 +89,9 @@ public class DiveLogService {
     @Transactional(readOnly = true)
     public List<DiveLog> getByDiverId(Long diverId) {
         return repository.findByDiverIdWithEquipment(diverId);
+    }
+    
+    public Optional<DiveLog> findByShareToken(String token) {
+        return repository.findByShareToken(token);
     }
 }

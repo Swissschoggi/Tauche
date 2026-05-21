@@ -1,7 +1,9 @@
 package com.tauche.tauche.model;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -19,6 +21,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -30,7 +33,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 @Data
-@EqualsAndHashCode(exclude = {"equipmentUsed", "diver"})
+@EqualsAndHashCode(exclude = {"equipmentUsed", "diver", "galleryImages"})
 @Entity
 @Builder
 @NoArgsConstructor
@@ -115,4 +118,14 @@ public class DiveLog {
     )
     private Set<Equipment> equipmentUsed = new HashSet<>();
 
+    @Column(name = "share_token", unique = true)
+    private String shareToken;
+
+    @OneToMany(mappedBy = "diveLog", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    @Builder.Default
+    private List<GalleryImage> galleryImages = new ArrayList<>();
+
+    public String getShareToken() { return shareToken; }
+    public void setShareToken(String shareToken) { this.shareToken = shareToken; }
 }

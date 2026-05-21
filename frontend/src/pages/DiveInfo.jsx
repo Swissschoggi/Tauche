@@ -4,9 +4,13 @@ import { getDiveById, updateDive, uploadDiveImage, getEquipmentCloset } from "..
 import {
   Calendar, MapPin, ArrowDown, Timer, Compass, Thermometer,
   Eye, Waves, Cloud, Shirt, Weight, Gauge, User, Building,
-  FlaskRound, FileText, Wrench
+  FlaskRound, FileText, Wrench, Share2, Heart, Package
 } from "lucide-react"
 import DOMPurify from 'dompurify';
+import { shareDive } from '../components/shareUtils'
+import MedicalQuestionnaire from './MedicalQuestionnaire'
+import GearPackingList from './GearPackingList'
+import PhotoGallery from './PhotoGallery'
 import "./DiveInfo.css"
 
 function formatValueWithUnits(name, value, isMetric) {
@@ -110,16 +114,17 @@ export default function DiveInfo() {
   const [isEditing, setIsEditing] = useState(false)
   const [dive, setDive] = useState(null)
   const [formData, setFormData] = useState(null)
-  const [imageFile, setImageFile] = useState(null)
-  const [imagePreview, setImagePreview] = useState(null)
+  const [mainImageFile, setMainImageFile] = useState(null)
+  const [mainImagePreview, setMainImagePreview] = useState(null)
   const [suggestions, setSuggestions] = useState([])
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [availableEquipment, setAvailableEquipment] = useState([])
+  const [showMedical, setShowMedical] = useState(false)
+  const [showPackingList, setShowPackingList] = useState(false)
 
   const localMetricSetting = localStorage.getItem("useMetric")
   const isMetric = localMetricSetting !== null ? JSON.parse(localMetricSetting) : true
 
-  // Load equipment list
   useEffect(() => {
     async function loadEquipment() {
       try {
@@ -138,12 +143,16 @@ export default function DiveInfo() {
         const res = await getDiveById(id)
         if (!res) return
         const actualData = res?.data ? res.data : res
-        // Extract equipment IDs
         if (actualData.equipmentUsed && Array.isArray(actualData.equipmentUsed)) {
           actualData.equipmentIds = actualData.equipmentUsed.map(eq => eq.id)
         }
         setDive(actualData)
         setFormData(actualData)
+        
+        const savedGallery = localStorage.getItem(`gallery_${id}`)
+        if (savedGallery) {
+          setGalleryPhotos(JSON.parse(savedGallery))
+        }
       } catch (err) {
         console.error(err)
       }
@@ -170,7 +179,6 @@ export default function DiveInfo() {
     return () => clearTimeout(timeout)
   }, [formData?.location])
 
-  // Handle equipment selection change
   function handleEquipmentChange(e) {
     const selectedOptions = Array.from(e.target.selectedOptions)
     const selectedIds = selectedOptions.map(option => parseInt(option.value))
@@ -181,18 +189,20 @@ export default function DiveInfo() {
     try {
       let currentDiveState = { ...formData }
       
-      // Handle image upload
-      if (imageFile) {
+      if (mainImageFile) {
         try {
-          const updatedDiveFromUpload = await uploadDiveImage(id, imageFile)
+          const updatedDiveFromUpload = await uploadDiveImage(id, mainImageFile)
           const uploadData = updatedDiveFromUpload?.data ? updatedDiveFromUpload.data : updatedDiveFromUpload
-          if (uploadData?.imagePath) currentDiveState.imagePath = uploadData.imagePath
+          if (uploadData?.imagePath) {
+            currentDiveState.imagePath = uploadData.imagePath
+            setMainImagePreview(null)
+            setMainImageFile(null)
+          }
         } catch (uploadErr) {
           console.error(uploadErr)
         }
       }
 
-      // Prepare payload - include equipmentIds
       const payload = {}
       Object.entries(currentDiveState).forEach(([key, value]) => {
         if ((key === "latitude" || key === "longitude") && (value === "" || value == null)) return
@@ -200,7 +210,7 @@ export default function DiveInfo() {
           if (value && value.length > 0) {
             payload[key] = value
           } else {
-            payload[key] = [] // Send empty array if no equipment selected
+            payload[key] = []
           }
           return
         }
@@ -220,23 +230,20 @@ export default function DiveInfo() {
       setDive(prev => ({ ...prev, ...payload, imagePath: freshImagePath }))
       setFormData(prev => ({ ...prev, ...payload, imagePath: freshImagePath }))
       setIsEditing(false)
-      setImageFile(null)
-      setImagePreview(null)
     } catch (err) {
       console.error("Error saving dive:", err)
       alert("Failed to save changes: " + (err.response?.data?.message || err.message))
     }
   }
 
-  async function handleImageChange(file) {
+  async function handleMainImageChange(file) {
     if (!file) return
-    setImageFile(file)
-    setImagePreview(URL.createObjectURL(file))
+    setMainImageFile(file)
+    setMainImagePreview(URL.createObjectURL(file))
   }
 
   if (!dive || !formData) return <div className="dive-detail-page" style={{textAlign:"center", paddingTop:"120px"}}><p>Loading...</p></div>
 
-  // Get selected equipment names for display
   const selectedEquipmentNames = formData.equipmentIds && formData.equipmentIds.length > 0
     ? availableEquipment
         .filter(eq => formData.equipmentIds.includes(eq.id))
@@ -250,13 +257,13 @@ export default function DiveInfo() {
       
       <div className="dive-hero">
         <img 
-          src={imagePreview || (dive.imagePath ? dive.imagePath : "https://placehold.co/600x400?text=Dive")} 
+          src={mainImagePreview || (dive.imagePath ? dive.imagePath : "https://placehold.co/600x400?text=Dive")} 
           alt="Dive view" 
         />
         
         {isEditing && (
-          <label className="image-upload-btn">📷 Change image
-            <input type="file" hidden accept="image/*" onChange={(e) => handleImageChange(e.target.files[0])} />
+          <label className="image-upload-btn">📷 Change Main Image
+            <input type="file" hidden accept="image/*" onChange={(e) => handleMainImageChange(e.target.files[0])} />
           </label>
         )}
         
@@ -268,6 +275,64 @@ export default function DiveInfo() {
           )}
           <p><MapPin size={14} style={{ display: "inline", marginRight: "6px", verticalAlign: "middle" }} /> {dive.location || "Unknown Coordinates"}</p>
         </div>
+      </div>
+
+      <div style={{ display: 'flex', gap: '12px', marginBottom: '20px', justifyContent: 'flex-end' }}>
+        <button 
+          onClick={() => setShowMedical(true)}
+          style={{ 
+            background: 'rgba(56, 189, 248, 0.15)',
+            border: '1px solid rgba(56, 189, 248, 0.3)',
+            color: '#38bdf8',
+            padding: '8px 16px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            borderRadius: '10px',
+            cursor: 'pointer'
+          }}
+        >
+          <Heart size={16} /> Medical
+        </button>
+        <button 
+          onClick={() => setShowPackingList(true)}
+          style={{ 
+            background: 'rgba(234, 179, 8, 0.15)',
+            border: '1px solid rgba(234, 179, 8, 0.3)',
+            color: '#fbbf24',
+            padding: '8px 16px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            borderRadius: '10px',
+            cursor: 'pointer'
+          }}
+        >
+          <Package size={16} /> Packing List
+        </button>
+        <button 
+          onClick={async () => {
+            try {
+              await shareDive(dive || formData)
+            } catch (err) {
+              console.error('Share error:', err)
+              alert('Failed to share. Please try again.')
+            }
+          }}
+          style={{ 
+            background: 'rgba(34, 197, 94, 0.15)',
+            border: '1px solid rgba(34, 197, 94, 0.3)',
+            color: '#4ade80',
+            padding: '8px 16px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            borderRadius: '10px',
+            cursor: 'pointer'
+          }}
+        >
+          <Share2 size={16} /> Share
+        </button>
       </div>
 
       <div className="dive-grid-info">
@@ -377,6 +442,25 @@ export default function DiveInfo() {
           )}
         </div>
       </div>
+
+      <h3 style={{ marginTop: '32px', marginBottom: '16px', color: '#38bdf8' }}>📸 Dive Photo Gallery</h3>
+      <PhotoGallery diveId={id} />
+
+      {showMedical && (
+        <MedicalQuestionnaire 
+          onClose={() => setShowMedical(false)}
+          onComplete={() => {
+            console.log('Medical questionnaire completed')
+          }}
+        />
+      )}
+
+      {showPackingList && dive?.diveType && (
+        <GearPackingList 
+          diveType={dive.diveType}
+          onClose={() => setShowPackingList(false)}
+        />
+      )}
 
       <button className="submit-btn" onClick={() => (isEditing ? handleSave() : setIsEditing(true))}>
         {isEditing ? "Save Log Changes" : "Edit Parameters"}

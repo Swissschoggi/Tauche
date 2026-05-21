@@ -14,15 +14,33 @@
   box-sizing: border-box;
 }
 
-body {
+html, body {
   min-height: 100vh;
   background: radial-gradient(circle at top, #1e3a8a 0%, #0f172a 40%, #020617 100%);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  background-size: cover;
   color: var(--text);
   font-family: 'Inter', system-ui, sans-serif;
 }
 
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 20% 10%, rgba(56, 189, 248, 0.08), transparent 50%),
+              radial-gradient(circle at 80% 30%, rgba(29, 78, 216, 0.06), transparent 55%);
+  pointer-events: none;
+  z-index: -1;
+}
+
 #root {
   min-height: 100vh;
+  position: relative;
+  z-index: 1;
 }
 
 button {
@@ -99,7 +117,6 @@ button:hover {
   transform: translateY(-1px);
 }
 
-/* 5. Dive Cards & Layouts */
 .dive-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -156,4 +173,205 @@ button:hover {
   border-radius: 999px;
   font-size: 12px;
   color: var(--muted);
+}
+
+@media (max-width: 768px) {
+  .back-dashboard-global-btn,
+  .nav-settings-global-btn {
+    position: fixed !important;
+    top: 10px !important;
+    padding: 8px 12px !important;
+    font-size: 12px !important;
+    z-index: 1000 !important;
+  }
+  
+  .back-dashboard-global-btn {
+    left: 10px !important;
+  }
+  
+  .nav-settings-global-btn {
+    right: 10px !important;
+  }
+  
+  .dive-list-page {
+    padding: 80px 16px 20px 16px !important;
+  }
+  
+  .header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  
+  .header h1 {
+    font-size: 24px;
+  }
+  
+  .header-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  
+  .btn-dashboard-nav,
+  .btn-primary-action,
+  .btn-danger {
+    flex: 1 1 calc(33.33% - 8px);
+    font-size: 12px;
+    height: 36px;
+  }
+  
+  .dive-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .dive-image {
+    height: 180px;
+  }
+  
+  .dive-info h3 {
+    font-size: 16px;
+  }
+  
+  .analytics-page {
+    padding: 80px 16px 20px 16px !important;
+  }
+  
+  .stats-strip {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px;
+  }
+  
+  .stat-pill {
+    padding: 12px;
+  }
+  
+  .pill-val {
+    font-size: 16px;
+  }
+  
+  .analytics-card {
+    padding: 16px;
+  }
+  
+  .settings-page {
+    padding: 80px 16px 20px 16px !important;
+  }
+  
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .certification-wallet-page {
+    padding: 80px 16px 20px 16px !important;
+  }
+  
+  .digital-cards-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .equipment-page {
+    padding: 80px 16px 20px 16px !important;
+  }
+  
+  .equipment-cards-layout {
+    grid-template-columns: 1fr;
+  }
+  
+  .dive-form-page {
+    padding: 80px 16px 20px 16px !important;
+  }
+  
+  .dive-form-page .card {
+    padding: 24px;
+  }
+  
+  .dive-form-page form {
+    grid-template-columns: 1fr;
+  }
+  
+  .dive-detail-page {
+    padding: 80px 12px 20px 12px !important;
+  }
+  
+  .dive-hero img {
+    height: 200px !important;
+  }
+  
+  .hero-overlay h1 {
+    font-size: 18px !important;
+  }
+  
+  .dive-grid-info {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .info-card {
+    padding: 16px !important;
+  }
+  
+  .photo-gallery .gallery-grid {
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)) !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .btn-dashboard-nav,
+  .btn-primary-action,
+  .btn-danger {
+    flex: 1 1 calc(50% - 8px);
+  }
+  
+  .stats-strip {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .info-row {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+  
+  .info-row-left {
+    width: 100%;
+  }
+  
+  .info-row-input {
+    max-width: 100% !important;
+    width: 100%;
+  }
+  
+  .value {
+    text-align: left !important;
+  }
+}
+
+@supports (-webkit-touch-callout: none) {
+  .map-page-layout,
+  .dive-detail-page,
+  .analytics-page,
+  .settings-page,
+  .certification-wallet-page,
+  .equipment-page,
+  .dive-form-page,
+  .profile-page-container {
+    height: -webkit-fill-available;
+  }
+}
+
+@media (max-width: 768px) {
+  button,
+  .marker-container,
+  .map-back-btn,
+  .equipment-edit-btn,
+  .equipment-delete-btn,
+  .delete-single-btn,
+  .checkbox {
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  
+  input, select, textarea {
+    font-size: 16px !important;
+  }
 }

@@ -1,0 +1,275 @@
+.photo-gallery {
+  margin-top: 24px;
+  padding: 20px;
+  background: rgba(17, 24, 39, 0.4);
+  border-radius: 20px;
+  border: 1px solid rgba(144, 224, 239, 0.1);
+}
+
+.gallery-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.gallery-header h3 {
+  margin: 0;
+  font-size: 15px;
+  color: #38bdf8;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.upload-photo-btn {
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  color: #38bdf8;
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.upload-photo-btn:hover {
+  background: rgba(56, 189, 248, 0.25);
+}
+
+.empty-gallery {
+  text-align: center;
+  padding: 40px;
+  color: #64748b;
+  border: 1px dashed rgba(144, 224, 239, 0.2);
+  border-radius: 16px;
+}
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 12px;
+}
+
+.gallery-item {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.gallery-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.2s;
+}
+
+.gallery-item:hover img {
+  transform: scale(1.05);
+}
+
+.gallery-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+  padding: 8px;
+  display: flex;
+  justify-content: space-between;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.gallery-item:hover .gallery-overlay {
+  opacity: 1;
+}
+
+.tag-photo-btn, .delete-photo-btn {
+  background: rgba(0,0,0,0.6);
+  border: none;
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tag-photo-btn:hover {
+  background: #38bdf8;
+  color: #0f172a;
+}
+
+.delete-photo-btn:hover {
+  background: #ef4444;
+}
+
+.lightbox {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.95);
+  z-index: 20000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.lightbox img {
+  max-width: 90%;
+  max-height: 90%;
+  object-fit: contain;
+}
+
+.lightbox-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(255,255,255,0.2);
+  border: none;
+  color: white;
+  font-size: 30px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.tag-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.8);
+  backdrop-filter: blur(4px);
+  z-index: 20001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tag-modal {
+  background: #0f172a;
+  border: 1px solid rgba(144, 224, 239, 0.2);
+  border-radius: 20px;
+  padding: 24px;
+  width: 90%;
+  max-width: 400px;
+}
+
+.tag-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.tag-modal-header h4 {
+  margin: 0;
+  color: #38bdf8;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tag-modal-header button {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.existing-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.tag-badge {
+  background: rgba(56, 189, 248, 0.2);
+  color: #38bdf8;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tag-badge button {
+  background: transparent;
+  border: none;
+  color: #38bdf8;
+  cursor: pointer;
+  padding: 0;
+  font-size: 14px;
+}
+
+.tag-input-area {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.tag-input-area input {
+  flex: 1;
+  padding: 10px 12px;
+  background: rgba(2, 6, 17, 0.6);
+  border: 1px solid rgba(144, 224, 239, 0.2);
+  border-radius: 10px;
+  color: #fff;
+}
+
+.tag-input-area button {
+  background: #38bdf8;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 10px;
+  color: #0f172a;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.suggested-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.suggested-tags button {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  cursor: pointer;
+  color: #94a3b8;
+}
+
+.suggested-tags button:hover {
+  background: rgba(56, 189, 248, 0.2);
+  color: #38bdf8;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+

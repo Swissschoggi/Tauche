@@ -11,13 +11,15 @@ import ProfilePage from "./pages/ProfilePage"
 import SettingsPage from "./pages/SettingsPage"
 import CertificationPage from "./pages/CertificationPage"
 import EquipmentPage from "./pages/EquipmentPage"
+import SharedDivePage from "./pages/SharedDivePage"
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} /> 
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/share/:token" element={<SharedDivePage />} />
 
         <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
         <Route path="/new" element={<ProtectedRoute><DiveForm /></ProtectedRoute>} />
@@ -31,7 +33,6 @@ function App() {
         <Route path="/equipment" element={<ProtectedRoute><EquipmentPage /></ProtectedRoute>} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
-
       </Routes>
     </BrowserRouter>
   )

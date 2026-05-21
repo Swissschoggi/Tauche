@@ -71,4 +71,16 @@ public class Equipment {
     @JsonIgnore
     @Builder.Default
     private Set<DiveLog> diveLogs = new HashSet<>();
+    
+    @Column(length = 100)
+    private String manufacturer;
+    
+    @Column(length = 100)
+    private String model;
+    
+    @Column(name = "purchase_price")
+    private Double purchasePrice;
+    
+    @Column(name = "last_service_notes", columnDefinition = "TEXT")
+    private String lastServiceNotes;
 }

@@ -3,6 +3,7 @@ package com.tauche.tauche.service;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -24,7 +25,7 @@ public class EquipmentService {
     @Transactional(readOnly = true)
     public List<EquipmentDTO> getEquipmentClosetForDiver(Diver diver) {
         List<Equipment> items = equipmentRepository.findByDiverAndIsActiveTrue(diver);
-        System.out.println("Found " + items.size() + " equipment items for diver"); // Debug log
+        System.out.println("Found " + items.size() + " equipment items for diver");
         return items.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
@@ -39,16 +40,39 @@ public class EquipmentService {
     }
 
     @Transactional
+    public Optional<Equipment> updateEquipment(Long id, Equipment newData, Diver diver) {
+        return equipmentRepository.findById(id)
+                .map(existing -> {
+                    if (!existing.getDiver().getId().equals(diver.getId())) {
+                        throw new RuntimeException("Not authorized to edit this equipment");
+                    }
+                    existing.setName(newData.getName());
+                    existing.setCategory(newData.getCategory());
+                    existing.setSerialNumber(newData.getSerialNumber());
+                    existing.setPurchaseDate(newData.getPurchaseDate());
+                    existing.setLastServiceDate(newData.getLastServiceDate());
+                    existing.setServiceIntervalDives(newData.getServiceIntervalDives());
+                    existing.setServiceIntervalMonths(newData.getServiceIntervalMonths());
+                    existing.setNotes(newData.getNotes());
+                    existing.setManufacturer(newData.getManufacturer());
+                    existing.setModel(newData.getModel());
+                    existing.setPurchasePrice(newData.getPurchasePrice());
+                    existing.setLastServiceNotes(newData.getLastServiceNotes());
+                    return equipmentRepository.save(existing);
+                });
+    }
+
+    @Transactional
     public void deleteEquipment(Long id) {
         equipmentRepository.findById(id).ifPresent(item -> {
             item.setIsActive(false); 
             equipmentRepository.save(item);
-            System.out.println("Deactivated equipment with ID: " + id); // Debug log
+            System.out.println("Deactivated equipment with ID: " + id);
         });
     }
 
     public EquipmentDTO convertToDTO(Equipment item) {
-        System.out.println("Converting equipment to DTO: " + item.getName()); // Debug log
+        System.out.println("Converting equipment to DTO: " + item.getName());
         
         EquipmentDTO dto = new EquipmentDTO();
         dto.setId(item.getId());
@@ -61,6 +85,10 @@ public class EquipmentService {
         dto.setServiceIntervalMonths(item.getServiceIntervalMonths());
         dto.setIsActive(item.getIsActive());
         dto.setNotes(item.getNotes());
+        dto.setManufacturer(item.getManufacturer());
+        dto.setModel(item.getModel());
+        dto.setPurchasePrice(item.getPurchasePrice());
+        dto.setLastServiceNotes(item.getLastServiceNotes());
 
         long totalDives = equipmentRepository.countTotalDivesByEquipmentId(item.getId());
         long totalMins = equipmentRepository.sumTotalMinutesByEquipmentId(item.getId());

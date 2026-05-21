@@ -13,6 +13,10 @@ public class EquipmentDTO {
     private Integer serviceIntervalMonths;
     private Boolean isActive;
     private String notes;
+    private String manufacturer;
+    private String model;
+    private Double purchasePrice;
+    private String lastServiceNotes;
 
     private long totalDivesWithGear;
     private long totalMinutesWithGear;
@@ -42,6 +46,14 @@ public class EquipmentDTO {
     public void setIsActive(Boolean isActive) { this.isActive = isActive; }
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
+    public String getManufacturer() { return manufacturer; }
+    public void setManufacturer(String manufacturer) { this.manufacturer = manufacturer; }
+    public String getModel() { return model; }
+    public void setModel(String model) { this.model = model; }
+    public Double getPurchasePrice() { return purchasePrice; }
+    public void setPurchasePrice(Double purchasePrice) { this.purchasePrice = purchasePrice; }
+    public String getLastServiceNotes() { return lastServiceNotes; }
+    public void setLastServiceNotes(String lastServiceNotes) { this.lastServiceNotes = lastServiceNotes; }
     public long getTotalDivesWithGear() { return totalDivesWithGear; }
     public void setTotalDivesWithGear(long totalDivesWithGear) { this.totalDivesWithGear = totalDivesWithGear; }
     public long getTotalMinutesWithGear() { return totalMinutesWithGear; }

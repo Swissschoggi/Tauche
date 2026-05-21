@@ -41,7 +41,6 @@ uploads/
 .git
 .gitignore
 .gitattributes
-Dockerfile
 .dockerignore
 
 .env

@@ -2,11 +2,12 @@
   position: relative; 
   min-height: 100vh;
   width: 100%;
-  padding: 100px 24px 40px 24px;
+  padding: 80px 16px 40px 16px;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   background: transparent;
+  box-sizing: border-box;
 }
 
 .analytics-container {
@@ -15,6 +16,7 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
+  margin-top: 20px;
 }
 
 .analytics-header h2 {
@@ -29,7 +31,6 @@
   font-size: 14px;
 }
 
-/* UPDATED: Changed grid template parameters from 3 to 4 to match the new dynamic layouts */
 .stats-strip {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

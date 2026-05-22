@@ -6,9 +6,16 @@ const copyToClipboardFallback = (text) => {
   textarea.style.position = 'fixed'
   textarea.style.top = '-9999px'
   textarea.style.left = '-9999px'
+  textarea.style.opacity = '0'
   document.body.appendChild(textarea)
   textarea.select()
-  document.execCommand('copy')
+  
+  try {
+    document.execCommand('copy')
+  } catch (err) {
+    console.error('Fallback layout engine execution copy commands failed:', err)
+  }
+  
   document.body.removeChild(textarea)
 }
 
@@ -40,25 +47,21 @@ export const shareDive = async (dive) => {
           text: shareText,
           url: shareUrl
         })
-        return
+        return;
       } catch (shareErr) {
-        console.log('Native share cancelled or failed:', shareErr)
+        console.log('Native share cancelled or failed, falling back to clipboard:', shareErr)
       }
     }
     
-    try {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(fullMessage)
-      } else {
-        copyToClipboardFallback(fullMessage)
-      }
-      alert('Share link copied to clipboard!\n\n' + shareUrl)
-    } catch (clipErr) {
-      console.error('Clipboard failed:', clipErr)
-      alert('Copy this link to share:\n\n' + shareUrl)
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(fullMessage)
+    } else {
+      copyToClipboardFallback(fullMessage)
     }
+    alert('Share link copied to clipboard!\n\n' + shareUrl)
+    
   } catch (err) {
-    console.error('Share failed:', err)
-    alert('Failed to create share link: ' + (err.response?.data?.message || err.message || 'Please try again'))
+    console.error('Shared operation layout processing failed:', err)
+    alert(err.message || 'Failed to create share link')
   }
 }

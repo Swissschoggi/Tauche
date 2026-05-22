@@ -20,7 +20,12 @@ function App() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        
         <Route path="/share/:token" element={<SharedDivePage />} />
+        
+        <Route path="/shared/dives/:token" element={<SharedDivePage />} />
+        
+        <Route path="/shared/:data" element={<ShareViewPage />} />
 
         <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
         <Route path="/new" element={<ProtectedRoute><DiveForm /></ProtectedRoute>} />
@@ -32,7 +37,6 @@ function App() {
         <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
         <Route path="/certification" element={<ProtectedRoute><CertificationPage /></ProtectedRoute>} />
         <Route path="/equipment" element={<ProtectedRoute><EquipmentPage /></ProtectedRoute>} />
-        <Route path="/shared/:data" element={<ShareViewPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

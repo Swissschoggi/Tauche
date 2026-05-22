@@ -88,7 +88,7 @@ export default function EquipmentPage() {
     return (
       <div className="equipment-loading">
         <div className="equipment-spinner" />
-        <p>Inspecting life support inventory tolerances...</p>
+        <p>Inspecting inventory tolerances...</p>
       </div>
     )
   }
@@ -98,20 +98,20 @@ export default function EquipmentPage() {
       <div className="equipment-controls">
         <button className="equipment-back-btn" onClick={() => navigate("/")}>← Back to Dashboard</button>
         <button className="equipment-add-btn" onClick={() => setShowAddModal(true)}>
-          <Plus size={16} /> Add Life Support Gear
+          <Plus size={16} /> Add Gear
         </button>
       </div>
 
       <div className="equipment-document">
         <div className="equipment-section-header">
           <span className="equipment-section-num">INV</span>
-          <h2>Locker & Life Support Systems</h2>
+          <h2>Locker</h2>
         </div>
 
         {gear.length === 0 ? (
           <div className="empty-equipment-state">
             <HardDrive size={32} />
-            <p>No logged life support gear found. Register your equipment to monitor safe usage parameters.</p>
+            <p>No logged gear found. Register your equipment to monitor safe usage parameters.</p>
           </div>
         ) : (
           <div className="equipment-cards-layout">
@@ -140,7 +140,7 @@ export default function EquipmentPage() {
                         <span className="equipment-category-tag">
                           <select value={editingItem.category} onChange={(e) => updateEditingField("category", e.target.value)} style={{ background: "transparent", color: "#90e0ef", border: "1px solid rgba(144,224,239,0.3)" }}>
                             <option value="Regulator">Regulator Set</option>
-                            <option value="BCD">BCD Jacket / Wing</option>
+                            <option value="BCD">BCD</option>
                             <option value="Computer">Dive Computer</option>
                             <option value="Cylinder">Cylinder Tank</option>
                             <option value="Suit">Exposure Suit</option>
@@ -290,7 +290,7 @@ export default function EquipmentPage() {
       {showAddModal && (
         <div className="equipment-modal-backdrop" onClick={() => setShowAddModal(false)}>
           <div className="equipment-modal-card" onClick={(e) => e.stopPropagation()}>
-            <h3>Register Life Support Gear</h3>
+            <h3>Register Gear</h3>
             <form onSubmit={handleAdd}>
               <div className="equipment-form-group">
                 <label>Gear Model Identity Name *</label>
@@ -312,7 +312,7 @@ export default function EquipmentPage() {
                 <label>Category System</label>
                 <select value={newItem.category} onChange={(e) => setNewItem(p => ({ ...p, category: e.target.value }))}>
                   <option value="Regulator">Regulator Set</option>
-                  <option value="BCD">BCD Jacket / Wing</option>
+                  <option value="BCD">BCD</option>
                   <option value="Computer">Dive Computer</option>
                   <option value="Cylinder">Cylinder Tank</option>
                   <option value="Suit">Exposure Suit</option>

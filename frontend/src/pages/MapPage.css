@@ -1,90 +1,89 @@
 .map-page-layout {
-  position: relative;
-  width: 100vw;
-  height: 100vh;
+  position: fixed;
+  inset: 0;                
+  width: 100%;
+  height: 100%;
   overflow: hidden;
   background-color: #0f172a;
   font-family: 'Inter', system-ui, sans-serif;
 }
 
 .globe-container {
-  width: 100%;
-  height: 100%;
   position: absolute;
-  top: 0;
-  left: 0;
+  inset: 0;
   z-index: 1;
+}
+
+.map-loading-state {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  background: rgba(15, 23, 42, 0.9);
+  padding: 28px 36px;
+  border-radius: 16px;
+  border: 1px solid rgba(144, 224, 239, 0.15);
+}
+
+.map-loading-state p {
+  color: #94a3b8;
+  font-size: 13px;
+  margin: 0;
+}
+
+.map-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(56, 189, 248, 0.2);
+  border-top-color: #38bdf8;
+  border-radius: 50%;
+  animation: mapSpin 0.9s linear infinite;
+}
+
+@keyframes mapSpin {
+  to { transform: rotate(360deg); }
 }
 
 .map-sidebar-overlay {
   position: absolute;
+  z-index: 10;
+
   top: 24px;
   left: 24px;
-  z-index: 10;
-  background: rgba(30, 41, 59, 0.75);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  padding: 24px;
+  max-width: 260px;
+  width: auto;
+
+  background: rgba(15, 23, 42, 0.82);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  padding: 20px;
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-  max-width: 260px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
 }
 
 .map-sidebar-overlay h2 {
-  margin: 0 0 6px 0;
-  font-size: 20px;
+  margin: 0 0 4px 0;
+  font-size: 18px;
   color: #ffffff;
   font-weight: 700;
 }
 
-.map-sidebar-overlay p {
-  margin: 0 0 16px 0;
+.map-sidebar-overlay > p {
+  margin: 0 0 14px 0;
   color: #94a3b8;
-  font-size: 13px;
+  font-size: 12px;
 }
 
-.map-back-btn {
-  width: 100%;
-  background: rgba(56, 189, 248, 0.15);
-  color: #38bdf8;
-  border: 1px solid rgba(56, 189, 248, 0.3);
-  padding: 10px 16px;
-  border-radius: 10px;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 600;
-  transition: all 0.2s ease;
-}
-
-.map-back-btn:hover {
-  background: rgba(56, 189, 248, 0.25);
-  transform: translateY(-1px);
-}
-
-.map-cert-btn {
-  width: 100%;
-  background: rgba(234, 179, 8, 0.12);
-  color: #fbbf24;
-  border: 1px solid rgba(234, 179, 8, 0.3);
-  padding: 10px 16px;
-  border-radius: 10px;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 600;
-  transition: all 0.2s ease;
-}
-
-.map-cert-btn:hover {
-  background: rgba(234, 179, 8, 0.22);
-  transform: translateY(-1px);
-}
-
-/* Depth heatmap legend */
 .depth-legend {
-  margin-bottom: 4px;
-  padding: 12px;
-  background: rgba(0, 0, 0, 0.25);
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  background: rgba(0, 0, 0, 0.3);
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
@@ -94,14 +93,14 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.8px;
-  color: #94a3b8 !important;
+  color: #64748b !important;
   margin: 0 0 8px 0 !important;
 }
 
 .legend-bar {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 6px;
 }
 
 .legend-stop {
@@ -115,67 +114,93 @@
   height: 10px;
   border-radius: 50%;
   flex-shrink: 0;
-  box-shadow: 0 0 6px currentColor;
+  box-shadow: 0 0 5px currentColor;
 }
 
 .legend-label {
   font-size: 12px;
   color: #cbd5e1;
+  flex: 1;
 }
 
-.legend-range {
-  font-size: 10px !important;
-  color: #64748b !important;
-  margin: 8px 0 0 0 !important;
-  text-align: right;
+.legend-range-label {
+  font-size: 10px;
+  color: #64748b;
 }
 
-/* Markers */
+.map-back-btn {
+  width: 100%;
+  background: rgba(56, 189, 248, 0.12);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  padding: 10px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.map-back-btn:hover {
+  background: rgba(56, 189, 248, 0.22);
+  transform: translateY(-1px);
+}
+
 .marker-container {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   transform: translate(-50%, -50%);
+  cursor: pointer;
+  touch-action: none;
 }
 
 .marker-core {
-  width: 12px;
-  height: 12px;
-  border: 2px solid #ffffff;
+  width: 13px;
+  height: 13px;
+  border: 2px solid rgba(255, 255, 255, 0.9);
   border-radius: 50%;
   z-index: 3;
+  position: relative;
 }
 
 .marker-pulse {
   position: absolute;
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
-  animation: markerGlowPulse 2s infinite ease-out;
+  animation: markerPulse 2.2s infinite ease-out;
   z-index: 2;
 }
 
-@keyframes markerGlowPulse {
-  0% { transform: scale(0.5); opacity: 1; }
-  100% { transform: scale(2.2); opacity: 0; }
+@keyframes markerPulse {
+  0%   { transform: scale(0.45); opacity: 1; }
+  100% { transform: scale(2.4);  opacity: 0; }
 }
 
 .map-tooltip-fixed {
   position: absolute;
-  bottom: 20px;
-  background: #0f172a;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(9, 15, 30, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   padding: 6px 10px;
   border-radius: 8px;
   white-space: nowrap;
   display: flex;
   flex-direction: column;
   gap: 2px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
   pointer-events: none;
-  opacity: 0.85;
+  opacity: 0.9;
   transition: opacity 0.2s ease;
+  z-index: 20;
 }
 
 .marker-container:hover .map-tooltip-fixed {
@@ -185,114 +210,78 @@
 .map-tooltip-fixed strong {
   color: #ffffff;
   font-size: 12px;
+  font-weight: 600;
 }
 
 .map-tooltip-fixed small {
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .marker-count-badge {
-  color: #0f172a;
   font-size: 10px;
   font-weight: 800;
   padding: 1px 5px;
   border-radius: 6px;
-  margin-left: 6px;
+  margin-left: 5px;
   display: inline-block;
   vertical-align: middle;
 }
 
-/* ============================================ */
-/* MOBILE FIXES - ONLY THESE LINES ARE ADDED   */
-/* ============================================ */
-
-/* Fix for mobile - ensure globe container fills screen properly */
 @media (max-width: 768px) {
-  .map-page-layout {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 100%;
-    height: 100%;
-  }
-  
-  .globe-container {
-    width: 100%;
-    height: 100%;
-    position: fixed;
-    top: 0;
-    left: 0;
-  }
-  
-  /* Make sidebar less intrusive on mobile - reposition to bottom */
   .map-sidebar-overlay {
     top: auto;
     bottom: 16px;
     left: 16px;
     right: 16px;
     max-width: none;
+    width: auto;
     padding: 14px 16px;
-    z-index: 20;
+    border-radius: 14px;
   }
-  
+
   .map-sidebar-overlay h2 {
     font-size: 16px;
-    margin-bottom: 4px;
   }
-  
-  .map-sidebar-overlay p {
+
+  .map-sidebar-overlay > p {
     font-size: 11px;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
   }
-  
+
   .depth-legend {
-    padding: 8px 12px;
-    margin-bottom: 0;
+    padding: 8px 10px;
+    margin-bottom: 10px;
   }
-  
+
   .legend-bar {
     flex-direction: row;
     flex-wrap: wrap;
-    gap: 12px;
+    gap: 8px 14px;
   }
-  
-  .legend-stop {
-    gap: 6px;
-  }
-  
+
   .legend-label {
-    font-size: 10px;
+    font-size: 11px;
   }
-  
-  .legend-range {
-    margin-top: 6px;
-    font-size: 9px !important;
+
+  .legend-range-label {
+    display: none;  
   }
-  
+
   .map-back-btn {
-    padding: 8px 12px;
+    padding: 9px 12px;
     font-size: 12px;
-    margin-top: 8px;
   }
-  
-  /* Fix tooltip positioning on mobile */
-  .map-tooltip-fixed {
-    bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%);
-    white-space: nowrap;
-    z-index: 25;
-  }
-  
+
   .marker-container {
-    transform: translate(-50%, -50%) scale(1.2);
+    transform: translate(-50%, -50%) scale(1.25);
+  }
+
+  .map-tooltip-fixed {
+    bottom: 26px;
   }
 }
 
-/* Extra small phones */
 @media (max-width: 480px) {
   .map-sidebar-overlay {
     bottom: 12px;
@@ -300,46 +289,66 @@
     right: 12px;
     padding: 12px;
   }
-  
-  .map-sidebar-overlay h2 {
-    font-size: 14px;
-  }
-  
-  .depth-legend {
-    padding: 6px 10px;
-  }
-  
-  .legend-bar {
-    gap: 8px;
-  }
-  
-  .legend-dot {
-    width: 8px;
-    height: 8px;
-  }
-  
-  .legend-label {
-    font-size: 9px;
-  }
-  
-  .map-tooltip-fixed {
-    bottom: 25px;
-    padding: 4px 8px;
-  }
-  
-  .map-tooltip-fixed strong {
-    font-size: 10px;
-  }
-  
-  .map-tooltip-fixed small {
-    font-size: 9px;
+}
+
+@supports (height: 100dvh) {
+  .map-page-layout {
+    height: 100dvh;
   }
 }
 
-/* Safari iOS fix for 100vh */
 @supports (-webkit-touch-callout: none) {
-  .map-page-layout,
-  .globe-container {
+  .map-page-layout {
     height: -webkit-fill-available;
+  }
+}
+
+@media (max-width: 768px) {
+  .map-page-container, 
+  .globe-wrapper {
+    display: flex;
+    flex-direction: column;
+    width: 100% !important;
+    height: auto !important;
+    padding: 12px;
+  }
+
+  .map-container,
+  #map,
+  .globe-surface {
+    width: 100% !important;
+    height: 320px;
+    min-height: 320px;
+    position: relative;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .map-page,
+  .map-container-wrapper,
+  .globe-view-main,
+  div[class*="globe"],
+  #map {
+    display: block !important;
+    position: relative !important;
+    width: 100% !important;
+    height: 380px !important;
+    min-height: 380px !important;
+    max-height: 380px !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    z-index: 10 !important;
+    overflow: visible !important;
+  }
+
+  .globe-parent, 
+  .map-section {
+    width: 100% !important;
+    height: auto !important;
+    min-height: 400px !important;
+    display: flex !important;
+    flex-direction: column !important;
   }
 }

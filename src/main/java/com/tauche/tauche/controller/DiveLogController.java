@@ -43,6 +43,7 @@ import com.tauche.tauche.repository.GalleryImageRepository;
 import com.tauche.tauche.service.DiveLogService;
 import com.tauche.tauche.service.FileService;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -258,7 +259,8 @@ public class DiveLogController {
     }
 
     @PostMapping("/{id}/share")
-    public ResponseEntity<?> createShareLink(@PathVariable Long id, Authentication authentication) {
+    @Transactional
+    public ResponseEntity<?> createShareLink(@PathVariable Long id, Authentication authentication, HttpServletRequest request) {
         if (authentication == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         
         try {
@@ -282,15 +284,31 @@ public class DiveLogController {
             }
             
             String shareToken = dive.getShareToken();
-            if (shareToken == null || shareToken.isEmpty()) {
+            if (shareToken == null || shareToken.isEmpty() || shareToken.length() > 8) {
                 shareToken = UUID.randomUUID().toString().substring(0, 8);
                 dive.setShareToken(shareToken);
                 service.update(id, dive);
-                log.info("Created new share token {} for dive {}", shareToken, id);
+                log.info("Created new 8-character share token {} for dive {}", shareToken, id);
             }
             
-            String baseUrl = System.getenv().getOrDefault("BASE_URL", "http://localhost:8080");
-            String shareUrl = baseUrl + "/share/" + shareToken;
+            String envBaseUrl = System.getenv("BASE_URL");
+            String baseUrl;
+            if (envBaseUrl != null && !envBaseUrl.trim().isEmpty()) {
+                baseUrl = envBaseUrl;
+            } else {
+                String scheme = request.getScheme();
+                String serverName = request.getServerName();
+                int serverPort = request.getServerPort();
+                
+                StringBuilder urlBuilder = new StringBuilder();
+                urlBuilder.append(scheme).append("://").append(serverName);
+                if ((scheme.equals("http") && serverPort != 80) || (scheme.equals("https") && serverPort != 443)) {
+                    urlBuilder.append(":").append(serverPort);
+                }
+                baseUrl = urlBuilder.toString();
+            }
+            
+            String shareUrl = baseUrl + "/shared/dives/" + shareToken;
             
             return ResponseEntity.ok(Map.of("shareUrl", shareUrl, "token", shareToken));
             
@@ -302,19 +320,23 @@ public class DiveLogController {
     }
 
     @GetMapping("/share/{token}")
-    public ResponseEntity<DiveLogDTO> getSharedDive(@PathVariable String token) {
-        Optional<DiveLog> diveOpt = service.findByShareToken(token);
-        if (diveOpt.isEmpty()) {
-            return ResponseEntity.notFound().build();
+        @Transactional(readOnly = true)
+        public ResponseEntity<DiveLogDTO> getSharedDive(@PathVariable String token) {
+            log.info("Publicly retrieving shared dive info using token: {}", token);
+            
+            Optional<DiveLog> diveOpt = service.findByShareToken(token);
+            if (diveOpt.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+            
+            DiveLog diveLog = diveOpt.get();
+            DiveLogDTO dto = DiveLogDTO.fromEntity(diveLog);
+            
+            dto.setNotes(null); 
+            
+            return ResponseEntity.ok(dto);
         }
-        
-        DiveLog diveLog = diveOpt.get();
-        DiveLogDTO dto = DiveLogDTO.fromEntity(diveLog);
-        dto.setNotes(null);
-        return ResponseEntity.ok(dto);
-    }
 
-    // Gallery Image Endpoints
     @PostMapping("/{id}/gallery/upload")
     @Transactional
     public ResponseEntity<?> uploadGalleryImage(

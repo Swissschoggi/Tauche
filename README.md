@@ -6,7 +6,7 @@
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org)
 
 **Tauche** *(Swiss German for “diving”)* is a modern full-stack web application for logging, managing, and analyzing scuba dives.  
-It combines detailed dive logging with interactive telemetry visualization, 3D geospatial mapping, equipment service tracking, and automated media upload.
+It combines detailed dive logging with interactive telemetry visualization, equipment service tracking, media upload and sharing capabilities.
 As a disclaimer, I partially vibecoded this, due to time constraints and lack of knowledge. I am always happy if people can help me improve both my skills and this app by opening issues :)
 > **Live Demo**: [https://tauche.onrender.com](https://tauche.onrender.com)
 > 
@@ -122,26 +122,51 @@ docker-compose up -d
 
 ```text
 Tauche/
-├── .mvn/
-├── frontend/
-│   ├── src/
-│   │   ├── api/
-│   │   │   └── diveApi.js
-│   │   ├── components/
-│   │   └── AnalyticsPage.jsx
-│   ├── .env
-│   └── Dockerfile
-│
-├── src/
-│   └── main/java/com/tauche/
-│       ├── config/
-│       │   └── WebConfig.java
-│       └── TaucheApplication.java
-│
-├── uploads/
 ├── docker-compose.yml
 ├── Dockerfile
-└── README.md
+├── frontend/
+│   ├── index.html
+│   ├── package.json
+│   ├── src/
+│   │   ├── App.jsx
+│   │   ├── main.jsx
+│   │   ├── components/
+│   │   │   ├── DiveCalculations.jsx
+│   │   │   ├── DiveTrendChart.jsx
+│   │   │   └── ProtectedRoute.jsx
+│   │   ├── pages/
+│   │   │   ├── AnalyticsPage.jsx
+│   │   │   ├── CertificationPage.jsx
+│   │   │   ├── DiveFormPage.jsx
+│   │   │   ├── DiveInfo.jsx
+│   │   │   ├── EquipmentPage.jsx
+│   │   │   ├── GearPackingList.jsx
+│   │   │   ├── HomePage.jsx
+│   │   │   ├── LoginPage.jsx
+│   │   │   ├── MapPage.jsx
+│   │   │   ├── MedicalQuestionnaire.jsx
+│   │   │   ├── PhotoGallery.jsx
+│   │   │   ├── ProfilePage.jsx
+│   │   │   ├── RegisterPage.jsx
+│   │   │   ├── SettingsPage.jsx
+│   │   │   └── SharedDivePage.jsx
+│   │   └── ...
+│   └── vite.config.js
+├── LICENSE
+├── pom.xml
+├── README.md
+├── render.yaml
+└── src/
+    └── main/
+        └── java/
+            └── com/tauche/tauche/
+                ├── config/
+                ├── controller/
+                ├── dto/
+                ├── model/
+                ├── repository/
+                ├── service/
+                └── TaucheApplication.java
 ```
 
 ---

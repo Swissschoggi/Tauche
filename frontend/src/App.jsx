@@ -12,6 +12,7 @@ import SettingsPage from "./pages/SettingsPage"
 import CertificationPage from "./pages/CertificationPage"
 import EquipmentPage from "./pages/EquipmentPage"
 import SharedDivePage from "./pages/SharedDivePage"
+import ShareViewPage from "./pages/ShareViewPage"
 
 function App() {
   return (
@@ -31,7 +32,7 @@ function App() {
         <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
         <Route path="/certification" element={<ProtectedRoute><CertificationPage /></ProtectedRoute>} />
         <Route path="/equipment" element={<ProtectedRoute><EquipmentPage /></ProtectedRoute>} />
-
+        <Route path="/shared/:data" element={<ShareViewPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

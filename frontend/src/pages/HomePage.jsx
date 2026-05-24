@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { getAllDives, deleteDive, getImageUrl } from "../api/diveApi"
-import { BarChart3, Map, Plus, User, Settings, Award, Wrench, Trash2, Star } from "lucide-react"
+import { BarChart3, Map, Plus, User, Settings, Award, Wrench, Trash2, Star, MapPin } from "lucide-react"
 import { useFavorites } from '../hooks/useFavorites'
+import SkeletonCard from '../components/SkeletonCard'
 import "./HomePage.css"
 
 export default function HomePage() {
@@ -10,11 +11,13 @@ export default function HomePage() {
   const [dives, setDives] = useState([])
   const [diveImages, setDiveImages] = useState({})
   const [selectedIds, setSelectedIds] = useState([])
+  const [loading, setLoading] = useState(true) // Add loading state
   
   const { favoriteSites, toggleFavoriteSite } = useFavorites()
 
   useEffect(() => {
     async function load() {
+      setLoading(true) // Start loading
       try {
         const res = await getAllDives()
         if (res) {
@@ -31,6 +34,8 @@ export default function HomePage() {
         }
       } catch (err) {
         console.error("Failed loading data dashboard entries:", err)
+      } finally {
+        setLoading(false) // End loading
       }
     }
     load()
@@ -78,6 +83,11 @@ export default function HomePage() {
               Delete ({selectedIds.length})
             </button>
           )}
+
+          <button className="btn-dashboard-nav" onClick={() => navigate("/sites")}>
+            <MapPin size={16} />
+            Dive Sites
+          </button>
 
           <button className="btn-primary-action" onClick={() => navigate("/new")}>
             <Plus size={16} />
@@ -145,7 +155,11 @@ export default function HomePage() {
         </div>
       )}
 
-      {dives.length === 0 ? (
+      {loading ? (
+        <div className="dive-grid">
+          {[1, 2, 3, 4, 5, 6].map(i => <SkeletonCard key={i} />)}
+        </div>
+      ) : dives.length === 0 ? (
         <div className="empty-state">
           <p>No dives recorded yet. Click 'New Log' to add your first underwater trip.</p>
         </div>

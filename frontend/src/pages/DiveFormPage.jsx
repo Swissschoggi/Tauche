@@ -4,6 +4,7 @@ import { createDive, updateDive, getDiveById, getEquipmentCloset } from "../api/
 import { diveFormSchema } from "../form/diveFormSchema"
 import { Settings } from "lucide-react"
 import { TANK_PRESETS } from '../constants/tankPresets'
+import { useDiveSites } from '../hooks/useDiveSites'
 import "./DiveFormPage.css"
 
 export default function DiveFormPage() {

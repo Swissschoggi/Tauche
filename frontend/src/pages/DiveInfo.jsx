@@ -4,13 +4,14 @@ import { getDiveById, updateDive, uploadDiveImage, getEquipmentCloset } from "..
 import {
   Calendar, MapPin, ArrowDown, Timer, Compass, Thermometer,
   Eye, Waves, Cloud, Shirt, Weight, Gauge, User, Building,
-  FlaskRound, FileText, Wrench, Share2, Heart, Package
+  FlaskRound, FileText, Wrench, Share2, Heart, Package, Camera
 } from "lucide-react"
 import DOMPurify from 'dompurify';
 import { shareDive } from '../components/shareUtils'
 import MedicalQuestionnaire from './MedicalQuestionnaire'
 import GearPackingList from './GearPackingList'
 import PhotoGallery from './PhotoGallery'
+import StoryExporter from '../components/StoryExporter'
 import "./DiveInfo.css"
 
 function formatValueWithUnits(name, value, isMetric) {
@@ -121,6 +122,7 @@ export default function DiveInfo() {
   const [availableEquipment, setAvailableEquipment] = useState([])
   const [showMedical, setShowMedical] = useState(false)
   const [showPackingList, setShowPackingList] = useState(false)
+  const [showStoryExporter, setShowStoryExporter] = useState(false) // Add this state
 
   const localMetricSetting = localStorage.getItem("useMetric")
   const isMetric = localMetricSetting !== null ? JSON.parse(localMetricSetting) : true
@@ -148,11 +150,6 @@ export default function DiveInfo() {
         }
         setDive(actualData)
         setFormData(actualData)
-        
-        const savedGallery = localStorage.getItem(`gallery_${id}`)
-        if (savedGallery) {
-          setGalleryPhotos(JSON.parse(savedGallery))
-        }
       } catch (err) {
         console.error(err)
       }
@@ -276,8 +273,25 @@ export default function DiveInfo() {
           <p><MapPin size={14} style={{ display: "inline", marginRight: "6px", verticalAlign: "middle" }} /> {dive.location || "Unknown Coordinates"}</p>
         </div>
       </div>
-
-      <div style={{ display: 'flex', gap: '12px', marginBottom: '20px', justifyContent: 'flex-end' }}>
+      
+      <div style={{ display: 'flex', gap: '12px', marginBottom: '20px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+        <button 
+          onClick={() => setShowStoryExporter(true)}
+          style={{ 
+            background: 'rgba(168, 85, 247, 0.15)',
+            border: '1px solid rgba(168, 85, 247, 0.3)',
+            color: '#a855f7',
+            padding: '8px 16px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            borderRadius: '10px',
+            cursor: 'pointer'
+          }}
+        >
+          <Camera size={16} /> Story
+        </button>
+        
         <button 
           onClick={() => setShowMedical(true)}
           style={{ 
@@ -294,6 +308,7 @@ export default function DiveInfo() {
         >
           <Heart size={16} /> Medical
         </button>
+        
         <button 
           onClick={() => setShowPackingList(true)}
           style={{ 
@@ -310,6 +325,7 @@ export default function DiveInfo() {
         >
           <Package size={16} /> Packing List
         </button>
+        
         <button 
           onClick={async () => {
             try {
@@ -334,6 +350,15 @@ export default function DiveInfo() {
           <Share2 size={16} /> Share
         </button>
       </div>
+
+      {showStoryExporter && (
+        <div className="story-modal-overlay" onClick={() => setShowStoryExporter(false)}>
+          <div className="story-modal" onClick={e => e.stopPropagation()}>
+            <button className="story-close" onClick={() => setShowStoryExporter(false)}>×</button>
+            <StoryExporter dive={dive} />
+          </div>
+        </div>
+      )}
 
       <div className="dive-grid-info">
         <div className="info-card">

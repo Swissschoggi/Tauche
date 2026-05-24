@@ -13,7 +13,7 @@ import CertificationPage from "./pages/CertificationPage"
 import EquipmentPage from "./pages/EquipmentPage"
 import SharedDivePage from "./pages/SharedDivePage"
 import ShareViewPage from "./pages/ShareViewPage"
-
+import DiveSiteDatabase from "./components/DiveSiteDatabase"
 function App() {
   return (
     <BrowserRouter>
@@ -38,6 +38,8 @@ function App() {
         <Route path="/certification" element={<ProtectedRoute><CertificationPage /></ProtectedRoute>} />
         <Route path="/equipment" element={<ProtectedRoute><EquipmentPage /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="/sites" element={<ProtectedRoute><DiveSiteDatabase /></ProtectedRoute>} />
+
       </Routes>
     </BrowserRouter>
   )

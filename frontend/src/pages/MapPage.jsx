@@ -1,84 +1,139 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, useCallback } from "react"
 import Globe from "react-globe.gl"
 import { getAllDives } from "../api/diveApi"
 import { useNavigate } from "react-router-dom"
 import { calculateSAC } from "../components/DiveCalculations"
-import { Eye, Compass, Anchor } from "lucide-react"
+import {
+  Search, SlidersHorizontal, BarChart3, ArrowLeft,
+  Compass, Target, X, ChevronRight, Wind, Anchor,
+  Users, Calendar, Gauge, MapPin, TrendingDown
+} from "lucide-react"
 import "./MapPage.css"
 
+/* ─── Depth → colour (Consistent App Palette) ─────────────────────── */
 function depthToColor(depth) {
-  if (!depth || depth === 0) return { hex: "#38bdf8", r: 56, g: 189, b: 248 }
-  if (depth <= 10) return { hex: "#38bdf8", r: 56, g: 189, b: 248 }
-  if (depth <= 20) return { hex: "#22c55e", r: 34, g: 197, b: 94 }
-  if (depth <= 30) return { hex: "#eab308", r: 234, g: 179, b: 8 }
-  return { hex: "#ef4444", r: 239, g: 68, b: 68 }
+  if (!depth || depth === 0) return { hex: "#38bdf8", r: 56,  g: 189, b: 248 }
+  if (depth <= 10)           return { hex: "#38bdf8", r: 56,  g: 189, b: 248 }
+  if (depth <= 20)           return { hex: "#22c55e", r: 34,  g: 197, b: 94  }
+  if (depth <= 30)           return { hex: "#eab308", r: 234, g: 179, b: 8   }
+  return                            { hex: "#ef4444", r: 239, g: 68,  b: 68  }
 }
 
-function getSize() {
-  return { width: window.innerWidth, height: window.innerHeight }
+/* ─── Depth gauge SVG ───────────────────────────────────────────────── */
+function DepthGauge({ depth, maxDepth = 50 }) {
+  const pct  = Math.min(depth / maxDepth, 1)
+  const col  = depthToColor(depth).hex
+  const r    = 26
+  const circ = 2 * Math.PI * r
+  const dash = circ * pct
+  return (
+    <svg width="68" height="68" viewBox="0 0 68 68" style={{flexShrink: 0}}>
+      <circle cx="34" cy="34" r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="5"/>
+      <circle
+        cx="34" cy="34" r={r}
+        fill="none" stroke={col} strokeWidth="5"
+        strokeDasharray={`${dash} ${circ}`}
+        strokeLinecap="round"
+        strokeDashoffset={circ * 0.25}
+        style={{ transition: "stroke-dasharray 0.9s cubic-bezier(.4,0,.2,1)" }}
+      />
+      <text x="34" y="31" textAnchor="middle" fill={col}
+        fontSize="12" fontFamily="Inter, system-ui, sans-serif" fontWeight="700">{depth}m</text>
+      <text x="34" y="44" textAnchor="middle" fill="rgba(255,255,255,0.3)"
+        fontSize="8" fontFamily="Inter, system-ui, sans-serif">depth</text>
+    </svg>
+  )
 }
 
 export default function MapPage() {
   const globeRef = useRef()
-  const containerRef = useRef()
+  const mapContainerRef = useRef()
   const navigate = useNavigate()
-  const [points, setPoints] = useState([])
-  const [wrecks, setWrecks] = useState([]) 
-  const [dimensions, setDimensions] = useState(getSize)
-  const [loading, setLoading] = useState(true)
-  const [fetchingWrecks, setFetchingWrecks] = useState(false)
-  const [showWrecks, setShowWrecks] = useState(true)
-  const [showDepthFilter, setShowDepthFilter] = useState(false)
-  const [depthFilter, setDepthFilter] = useState({ min: 0, max: 100 })
-  const [showStats, setShowStats] = useState(false)
 
+  const [points,        setPoints]        = useState([])
+  const [dimensions,    setDimensions]    = useState({ width: 800, height: 500 })
+  const [loading,       setLoading]       = useState(true)
+  const [depthFilter,   setDepthFilter]   = useState({ min: 0, max: 100 })
+  const [searchQuery,   setSearchQuery]   = useState("")
+  const [activePanel,   setActivePanel]   = useState(null) // "search" | "filter" | "stats"
+  const [selectedPoint, setSelectedPoint] = useState(null)
+  const [hoveredId,     setHoveredId]     = useState(null)
+
+  const satelliteBase = "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
+
+  const telemetryLegend = [
+    { hex: "#38bdf8", range: "0-10m", label: "Shallow" },
+    { hex: "#22c55e", range: "11-20m", label: "Recreational" },
+    { hex: "#eab308", range: "21-30m", label: "Deep Reef" },
+    { hex: "#ef4444", range: "30m+", label: "Technical" }
+  ]
+
+  /* Dynamically size globe wrapper to fit layout container context grid */
   useEffect(() => {
-    function onResize() { setDimensions(getSize()) }
-    window.addEventListener("resize", onResize)
-    return () => window.removeEventListener("resize", onResize)
-  }, [])
+    if (!mapContainerRef.current) return
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        const { width, height } = entry.contentRect
+        setDimensions({ width, height })
+      }
+    })
+    resizeObserver.observe(mapContainerRef.current)
+    return () => resizeObserver.disconnect()
+  }, [loading])
 
-  // 1. Fetch User Dive Logs
+  /* Load dive points */
   useEffect(() => {
     async function load() {
       setLoading(true)
       try {
-        const res = await getAllDives()
+        const res       = await getAllDives()
         const diveArray = Array.isArray(res) ? res : []
-        const validDives = diveArray.filter(d => d.latitude && d.longitude && !isNaN(parseFloat(d.latitude)) && !isNaN(parseFloat(d.longitude)))
-
-        const locationMap = new Map()
-        validDives.forEach(d => {
+        const valid     = diveArray.filter(
+          d => d.latitude && d.longitude &&
+               !isNaN(parseFloat(d.latitude)) && !isNaN(parseFloat(d.longitude))
+        )
+        const locMap = new Map()
+        valid.forEach(d => {
           const lat = parseFloat(d.latitude)
           const lng = parseFloat(d.longitude)
           const key = `${lat.toFixed(4)}_${lng.toFixed(4)}`
-          const sacRate = calculateSAC(d)
-          
-          if (locationMap.has(key)) {
-            const existing = locationMap.get(key)
-            existing.count++
-            existing.maxDepthAtLocation = Math.max(existing.maxDepthAtLocation, Number(d.depthMeters) || 0)
-            existing.minDepthAtLocation = Math.min(existing.minDepthAtLocation, Number(d.depthMeters) || 0)
-            existing.totalDepth += Number(d.depthMeters) || 0
-            if (sacRate) existing.sacRates.push(parseFloat(sacRate))
+          const sac = calculateSAC(d)
+          if (locMap.has(key)) {
+            const e = locMap.get(key)
+            e.count++
+            e.maxDepthAtLocation = Math.max(e.maxDepthAtLocation, Number(d.depthMeters) || 0)
+            e.minDepthAtLocation = Math.min(e.minDepthAtLocation, Number(d.depthMeters) || 0)
+            e.totalDepth        += Number(d.depthMeters) || 0
+            if (sac) e.sacRates.push(parseFloat(sac))
+            e.dates.push(d.date)
+            if (d.buddy && !e.buddies.includes(d.buddy)) e.buddies.push(d.buddy)
           } else {
-            locationMap.set(key, {
+            locMap.set(key, {
               lat, lng,
               name: d.diveTitle || "Untitled Expedition",
               location: d.location,
               maxDepthAtLocation: Number(d.depthMeters) || 0,
               minDepthAtLocation: Number(d.depthMeters) || 0,
               totalDepth: Number(d.depthMeters) || 0,
-              id: d.id,
-              count: 1,
-              sacRates: sacRate ? [parseFloat(sacRate)] : []
+              id: d.id, count: 1,
+              sacRates: sac ? [parseFloat(sac)] : [],
+              dates: [d.date],
+              buddies: d.buddy ? [d.buddy] : []
             })
           }
         })
-        
-        setPoints(Array.from(locationMap.values()).map(p => ({ ...p, isWreck: false })))
+        const processed = Array.from(locMap.values()).map(p => ({
+          ...p,
+          avgDepth: (p.totalDepth / p.count).toFixed(1),
+          avgSac:   p.sacRates.length
+            ? (p.sacRates.reduce((a,b)=>a+b,0)/p.sacRates.length).toFixed(1)
+            : null,
+          firstDive: p.dates.filter(Boolean).sort()[0],
+          lastDive:  p.dates.filter(Boolean).sort().reverse()[0]
+        }))
+        setPoints(processed)
       } catch (err) {
-        console.error("Failed loading logs:", err)
+        console.error("Map load error:", err)
       } finally {
         setLoading(false)
       }
@@ -86,173 +141,298 @@ export default function MapPage() {
     load()
   }, [])
 
-  // 2. Fetch Real Shipwrecks Live via OpenStreetMap Overpass API
+  /* Focus first position on start */
   useEffect(() => {
-    if (!showWrecks) return
-    
-    async function fetchGlobalWrecks() {
-      setFetchingWrecks(true)
-      try {
-        const query = `[out:json][timeout:25];
-          (
-            node["historic"="wreck"];
-            node["abandoned"="shipwreck"];
-          );
-          out body 150;`
-        
-        const response = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`)
-        const data = await response.json()
-        
-        if (data && data.elements) {
-          const parsedWrecks = data.elements.map(el => ({
-            id: `wreck_${el.id}`,
-            lat: el.lat,
-            lng: el.lon,
-            name: el.tags.name || el.tags.ship_name || "Unidentified Vessel Wreck",
-            depth: el.tags.depth || el.tags.water_depth || "Unknown",
-            historic: el.tags.historic || "Wreck Site",
-            note: el.tags.note || el.tags.description || "Historical marine archaeological structural hazard site entry."
-          }))
-          setWrecks(parsedWrecks)
-        }
-      } catch (err) {
-        console.error("Overpass down:", err)
-      } finally {
-        setFetchingWrecks(false)
-      }
+    if (points.length > 0 && globeRef.current) {
+      const t = setTimeout(() => {
+        globeRef.current.pointOfView({ lat: points[0].lat, lng: points[0].lng, altitude: 1.8 }, 1200)
+      }, 800)
+      return () => clearTimeout(t)
     }
-    
-    fetchGlobalWrecks()
-  }, [showWrecks])
+  }, [points])
 
-  const combinedPoints = [
-    ...points.filter(p => p.maxDepthAtLocation >= depthFilter.min && p.maxDepthAtLocation <= depthFilter.max),
-    ...(showWrecks ? wrecks.map(w => ({ ...w, isWreck: true, maxDepthAtLocation: parseInt(w.depth) || 0 })) : [])
-  ]
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.key !== "Escape") return
+      if (document.activeElement?.tagName === "INPUT") {
+        document.activeElement.blur()
+      }
+      setActivePanel(null)
+      setSelectedPoint(null)
+    }
+    document.addEventListener("keydown", handler, true)
+    return () => document.removeEventListener("keydown", handler, true)
+  }, [])
 
-  const totalDives = points.reduce((sum, p) => sum + p.count, 0)
-  const avgDepth = points.length > 0 ? (points.reduce((sum, p) => sum + p.maxDepthAtLocation, 0) / points.length).toFixed(1) : 0
-  const deepestPoint = points.length > 0 ? points.reduce((max, p) => p.maxDepthAtLocation > max.maxDepthAtLocation ? p : max, points[0]) : null
+  const zoomTo = useCallback((p) => {
+    globeRef.current?.pointOfView({ lat: p.lat, lng: p.lng, altitude: 0.7 }, 800)
+  }, [])
+
+  const resetView = useCallback(() => {
+    if (globeRef.current && points.length > 0)
+      globeRef.current.pointOfView({ lat: points[0].lat, lng: points[0].lng, altitude: 1.8 }, 800)
+  }, [points])
+
+  const togglePanel = (name) => setActivePanel(prev => prev === name ? null : name)
+
+  const filteredPoints = points.filter(p => {
+    const okDepth  = p.maxDepthAtLocation >= depthFilter.min && p.maxDepthAtLocation <= depthFilter.max
+    const okSearch = `${p.name} ${p.location || ""}`.toLowerCase().includes(searchQuery.toLowerCase())
+    return okDepth && okSearch
+  })
+
+  const totalDives   = points.reduce((s, p) => s + p.count, 0)
+  const avgDepth     = points.length
+    ? (points.reduce((s,p)=>s+p.maxDepthAtLocation,0)/points.length).toFixed(1)
+    : "—"
+  const deepestPoint = points.length
+    ? points.reduce((m,p) => p.maxDepthAtLocation > m.maxDepthAtLocation ? p : m, points[0])
+    : null
+  const bestSac = points.some(p=>p.avgSac)
+    ? points.filter(p=>p.avgSac).reduce((m,p) => parseFloat(p.avgSac)<parseFloat(m.avgSac)?p:m, points.find(p=>p.avgSac))
+    : null
+
+  if (loading) return (
+    <div className="mp-dashboard-container">
+      <div className="mp-card-loader">
+        <div className="mp-loading-ring" />
+        <p className="mp-loading-text">Synchronizing marine telemetry maps…</p>
+      </div>
+    </div>
+  )
 
   return (
-    <div className="map-page-layout">
-      <div className="globe-container" ref={containerRef}>
+    <div className="mp-dashboard-container">
+      
+      {/* ── Header Toolbar Layout Controls ── */}
+      <header className="mp-dashboard-header">
+        <div className="mp-header-left">
+          <button className="mp-back-btn" onClick={() => navigate("/")}>
+            <ArrowLeft size={16} />
+            <span>Dashboard</span>
+          </button>
+          <div className="mp-header-divider" />
+          <div>
+            <h1 className="mp-page-title">Expedition Map Globe</h1>
+            <p className="mp-page-subtitle">{filteredPoints.length} locations documented across {totalDives} logs</p>
+          </div>
+        </div>
+
+        <div className="mp-header-actions">
+          <button className={`mp-action-tab ${activePanel === "search" ? "active" : ""}`} onClick={() => togglePanel("search")}>
+            <Search size={14} />
+            <span>Search</span>
+          </button>
+          <button className={`mp-action-tab ${activePanel === "filter" ? "active" : ""}`} onClick={() => togglePanel("filter")}>
+            <SlidersHorizontal size={14} />
+            <span>Filters</span>
+          </button>
+          <button className={`mp-action-tab ${activePanel === "stats" ? "active" : ""}`} onClick={() => togglePanel("stats")}>
+            <BarChart3 size={14} />
+            <span>Analytics</span>
+          </button>
+          <div className="mp-header-divider" />
+          <button className="mp-utility-btn" onClick={resetView} title="Reset Camera View">
+            <Compass size={15} />
+          </button>
+        </div>
+      </header>
+
+      {/* ── Main Map Canvas Frame View ── */}
+      <main className="mp-viewport-body" ref={mapContainerRef}>
         <Globe
           ref={globeRef}
           width={dimensions.width}
           height={dimensions.height}
           globeImageUrl="//cdn.jsdelivr.net/npm/three-globe/example/img/earth-dark.jpg"
           backgroundImageUrl="//cdn.jsdelivr.net/npm/three-globe/example/img/night-sky.png"
-          globeTileEngineUrl={(x, y, z) => `https://mt1.google.com/vt/lyrs=s&x=${x}&y={y}&z=${z}`}
+          globeTileEngineUrl={(x,y,z) => satelliteBase.replace("{x}",x).replace("{y}",y).replace("{z}",z)}
           backgroundColor="#0f172a"
           waitForGlobeReady={true}
-          htmlElementsData={combinedPoints}
+
+          htmlElementsData={filteredPoints}
           htmlLat="lat"
           htmlLng="lng"
           htmlElement={(p) => {
+            const col = depthToColor(p.maxDepthAtLocation)
             const el = document.createElement("div")
-            el.className = "marker-container"
+            const isForced = hoveredId === p.id
+            el.className = `mp-marker ${isForced ? "mp-marker--open" : ""}`
             
-            if (p.isWreck) {
-              const depthLabel = p.depth !== "Unknown" ? `${p.depth}m` : "N/A"
-              el.innerHTML = `
-                <div class="marker-pulse wreck-pulse"></div>
-                <div class="marker-core wreck-core">🚢</div>
-                <div class="marker-badge-wrapper">
-                  <span class="marker-depth-badge wreck-depth-label">⚓ ${depthLabel}</span>
-                </div>
-                <div class="map-tooltip-fixed wreck-tooltip">
-                  <div class="tooltip-header"><strong style="color:#ef4444">🏴‍☠️ LIVE WRECK</strong></div>
-                  <div class="tooltip-title">${p.name}</div>
-                  <div class="tooltip-detail">📊 Logged Depth: <strong>${depthLabel}</strong></div>
-                  <div class="tooltip-detail">🔍 Classification: <strong>${p.historic}</strong></div>
-                  <div class="tooltip-description">${p.note}</div>
-                </div>
-              `
-            } else {
-              const color = depthToColor(p.maxDepthAtLocation)
-              const locationName = p.location ? p.location.split(",")[0] : p.name
-              const diveCountBadge = p.count > 1 ? `<span class="marker-count-badge" style="background:${color.hex}">${p.count}</span>` : ""
-              const markerDepthBadge = `<span class="marker-depth-badge" style="border-color:${color.hex}">📉 ${p.maxDepthAtLocation}m</span>`
-              
-              el.innerHTML = `
-                <div class="marker-pulse" style="background:rgba(${color.r},${color.g},${color.b},0.35)"></div>
-                <div class="marker-core" style="background:${color.hex};box-shadow:0 0 12px ${color.hex}88"></div>
-                <div class="marker-badge-wrapper">
-                  ${markerDepthBadge}
-                  ${diveCountBadge}
-                </div>
-                <div class="map-tooltip-fixed personal-tooltip">
-                  <div class="tooltip-header"><strong style="color:#38bdf8">📍 PERSONAL LOG</strong></div>
-                  <div class="tooltip-title">${locationName}</div>
-                  <div class="tooltip-detail">📊 Max Depth: <strong>${p.maxDepthAtLocation}m</strong></div>
-                  <div class="tooltip-footer-tip">👆 Click to view dive logs</div>
-                </div>
-              `
-              el.addEventListener("click", () => navigate(`/dives/${p.id}`))
-            }
+            // Explicit style configurations to make markers clickable inside Three.js container overlays
+            el.style.cursor = "pointer"
+            el.style.pointerEvents = "auto"
+
+            el.innerHTML = `
+              <div class="mp-marker-pulse" style="background:rgba(${col.r},${col.g},${col.b},0.25)"></div>
+              <div class="mp-marker-dot"   style="background:${col.hex};box-shadow:0 0 10px ${col.hex}88"></div>
+              ${p.count > 1 ? `<span class="mp-marker-badge" style="background:${col.hex}">${p.count}</span>` : ""}
+              <div class="mp-marker-label" style="border-color:${col.hex}44">
+                <span style="color:${col.hex}">${p.maxDepthAtLocation}m</span>
+              </div>
+            `
+            
+            // Click Handler definition to center on coordinates and trigger layout popover
+            el.addEventListener("click", (e) => {
+              e.stopPropagation()
+              zoomTo(p)
+              setSelectedPoint(p)
+              setActivePanel(null)
+            })
             return el
           }}
+
+          ringsData={filteredPoints}
+          ringLat="lat"
+          ringLng="lng"
+          ringColor={(p) => [depthToColor(p.maxDepthAtLocation).hex, "rgba(0,0,0,0)"]}
+          ringMaxRadius={(p) => Math.min(2.5, 1.2 + p.count * 0.3)}
+          ringPropagationSpeed={2.5}
+          ringRepeatPeriod={1400}
         />
-      </div>
 
-      <button className="stats-toggle-btn" onClick={() => setShowStats(!showStats)}>📊</button>
+        {/* ── Floating Overlay Controls Context Menus ── */}
+        {activePanel && (
+          <div className="mp-floating-panel">
+            {activePanel === "search" && (
+              <>
+                <div className="mp-panel-header">
+                  <div className="mp-panel-headline"><Search size={14} className="cyan" /><span>Search Sites</span></div>
+                  <button className="mp-close-overlay" onClick={() => setActivePanel(null)}><X size={14} /></button>
+                </div>
+                <div className="mp-panel-inner">
+                  <div className="mp-search-box-wrap">
+                    <Search size={13} className="mp-search-embedded-icon" />
+                    <input
+                      className="mp-search-field"
+                      type="text"
+                      placeholder="Filter by title or country..."
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                      autoFocus
+                    />
+                  </div>
+                  <div className="mp-list-group">
+                    {filteredPoints.length === 0 ? (
+                      <p className="mp-empty-text">No active points found</p>
+                    ) : (
+                      filteredPoints.map(p => {
+                        const col = depthToColor(p.maxDepthAtLocation)
+                        return (
+                          <button key={p.id} className="mp-list-row"
+                            onClick={() => { zoomTo(p); setSelectedPoint(p); setActivePanel(null) }}
+                            onMouseEnter={() => setHoveredId(p.id)}
+                            onMouseLeave={() => setHoveredId(null)}
+                          >
+                            <span className="mp-row-indicator" style={{ background: col.hex }} />
+                            <span className="mp-row-text">{p.location?.split(",")[0] || p.name}</span>
+                            <span className="mp-row-tag">{p.maxDepthAtLocation}m</span>
+                            <ChevronRight size={12} />
+                          </button>
+                        )
+                      })
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
 
-      {showStats && (
-        <div className="stats-floating-card">
-          <div className="stats-header">
-            <h4>📊 Dive Statistics</h4>
-            <button onClick={() => setShowStats(false)}>×</button>
-          </div>
-          <div className="stats-content">
-            <div className="stat-item"><span className="stat-icon">📍</span><span>{points.length} Locations</span></div>
-            <div className="stat-item"><span className="stat-icon">🤿</span><span>{totalDives} Total Dives</span></div>
-            <div className="stat-item"><span className="stat-icon">📊</span><span>Avg Depth: <strong>{avgDepth}m</strong></span></div>
-            {deepestPoint && <div className="stat-item"><span className="stat-icon">🔽</span><span>Deepest: <strong>{deepestPoint.maxDepthAtLocation}m</strong></span></div>}
-          </div>
-        </div>
-      )}
+            {activePanel === "filter" && (
+              <>
+                <div className="mp-panel-header">
+                  <div className="mp-panel-headline"><SlidersHorizontal size={14} className="yellow" /><span>Depth Configurations</span></div>
+                  <button className="mp-close-overlay" onClick={() => setActivePanel(null)}><X size={14} /></button>
+                </div>
+                <div className="mp-panel-inner">
+                  <div className="mp-range-group">
+                    <div className="mp-range-title"><span>Minimum Depth Range</span><b className="cyan">{depthFilter.min}m</b></div>
+                    <input type="range" className="mp-range-slider" min="0" max="50" value={depthFilter.min} onChange={e => setDepthFilter({ ...depthFilter, min: +e.target.value })} />
+                  </div>
+                  <div className="mp-range-group">
+                    <div className="mp-range-title"><span>Maximum Depth Range</span><b className="cyan">{depthFilter.max}m</b></div>
+                    <input type="range" className="mp-range-slider" min="0" max="100" value={depthFilter.max} onChange={e => setDepthFilter({ ...depthFilter, max: +e.target.value })} />
+                  </div>
 
-      <div className="map-sidebar-overlay">
-        <h2>🌍 Marine Map Globe</h2>
-        <p style={{ color: "#64748b", fontSize: "12px", margin: "0 0 16px 0" }}>Nautical Exploration Network</p>
+                  <div className="mp-legend-section">
+                    <p className="mp-legend-title">Telemetry Colors</p>
+                    <div className="mp-legend-grid">
+                      {telemetryLegend.map((item) => (
+                        <div key={item.range} className="mp-legend-item">
+                          <span className="mp-legend-dot" style={{ background: item.hex }} />
+                          <span className="mp-legend-label">{item.range} · {item.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
 
-        <div className="wreck-toggle-container">
-          <div className="toggle-label-group">
-            <Anchor size={14} className={fetchingWrecks ? "wreck-icon-spin spin-animation" : "wreck-icon-spin"} />
-            <span>{fetchingWrecks ? "Streaming Wrecks..." : "Show Live Shipwrecks"}</span>
-          </div>
-          <label className="switch-input-ui">
-            <input type="checkbox" checked={showWrecks} onChange={(e) => setShowWrecks(e.target.checked)} />
-            <span className="switch-slider-round"></span>
-          </label>
-        </div>
+            {activePanel === "stats" && (
+              <>
+                <div className="mp-panel-header">
+                  <div className="mp-panel-headline"><BarChart3 size={14} className="green" /><span>Metrics Overview</span></div>
+                  <button className="mp-close-overlay" onClick={() => setActivePanel(null)}><X size={14} /></button>
+                </div>
+                <div className="mp-panel-inner">
+                  <div className="mp-stats-mosaic">
+                    <div className="mp-stat-block"><MapPin size={14} className="cyan" /><h3>{points.length}</h3><p>Unique Sites</p></div>
+                    <div className="mp-stat-block"><Anchor size={14} className="green" /><h3>{totalDives}</h3><p>Logged Dives</p></div>
+                    <div className="mp-stat-block"><Gauge size={14} className="yellow" /><h3>{avgDepth}m</h3><p>Average Depth</p></div>
+                    {deepestPoint && <div className="mp-stat-block"><TrendingDown size={14} className="red" /><h3>{deepestPoint.maxDepthAtLocation}m</h3><p>Max Descent</p></div>}
+                  </div>
 
-        <p style={{ marginTop: "8px", fontSize: "11px", color: "#64748b" }}>
-          {points.length} logged positions · {showWrecks ? wrecks.length : 0} live shipwrecks mapped
-        </p>
+                  {bestSac && (
+                    <div className="mp-highlight-feature">
+                      <Wind size={13} className="cyan" />
+                      <div><h6>Optimal Gas Consumption</h6><p>{bestSac.avgSac} bar/min @ {bestSac.location?.split(",")[0] || bestSac.name}</p></div>
+                    </div>
+                  )}
 
-        {points.length > 0 && (
-          <div className="quick-zoom-buttons">
-            <button className="zoom-btn" onClick={() => globeRef.current.pointOfView({ lat: points[0].lat, lng: points[0].lng, altitude: 1.8 }, 800)}><Compass size={12} /> Reset View</button>
+                  {deepestPoint && (
+                    <button className="mp-cta-fly" onClick={() => { zoomTo(deepestPoint); setSelectedPoint(deepestPoint); setActivePanel(null) }}>
+                      <Target size={14} /><span>Focus Deepest Coordination</span>
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         )}
 
-        <div className="depth-filter-toggle">
-          <button className={`filter-btn ${showDepthFilter ? "active" : ""}`} onClick={() => setShowDepthFilter(!showDepthFilter)}>
-            <Eye size={12} /> Live Depth Filters
-          </button>
-        </div>
+        {/* ── Detail Float Card Context Popover ── */}
+        {selectedPoint && (() => {
+          const col = depthToColor(selectedPoint.maxDepthAtLocation)
+          return (
+            <div className="mp-popover-card">
+              <div className="mp-popover-stripe" style={{ background: col.hex }} />
+              <button className="mp-popover-close" onClick={() => setSelectedPoint(null)}><X size={14} /></button>
 
-        {showDepthFilter && (
-          <div className="depth-filter-controls">
-            <div className="filter-range"><label>Min Depth: {depthFilter.min}m</label><input type="range" min="0" max="50" value={depthFilter.min} onChange={(e) => setDepthFilter({ ...depthFilter, min: parseInt(e.target.value) })} /></div>
-            <div className="filter-range"><label>Max Depth: {depthFilter.max}m</label><input type="range" min="0" max="100" value={depthFilter.max} onChange={(e) => setDepthFilter({ ...depthFilter, max: parseInt(e.target.value) })} /></div>
-          </div>
-        )}
+              <div className="mp-popover-body">
+                <div className="mp-popover-main">
+                  <DepthGauge depth={selectedPoint.maxDepthAtLocation} maxDepth={Math.max(50, selectedPoint.maxDepthAtLocation + 10)} />
+                  <div className="mp-popover-header">
+                    <h4>{selectedPoint.location?.split(",")[0] || selectedPoint.name}</h4>
+                    {selectedPoint.location && <p>{selectedPoint.location}</p>}
+                  </div>
+                </div>
 
-        <button className="map-back-btn" onClick={() => navigate("/")}>← Dashboard</button>
-      </div>
+                <div className="mp-popover-meta-list">
+                  {selectedPoint.count > 1 && <div className="mp-popover-meta-row"><Anchor size={12} /><span>{selectedPoint.count} entries ({selectedPoint.minDepthAtLocation}m - {selectedPoint.maxDepthAtLocation}m)</span></div>}
+                  {selectedPoint.avgSac && <div className="mp-popover-meta-row"><Wind size={12} /><span>Mean SAC Rate: {selectedPoint.avgSac} bar/min</span></div>}
+                  {selectedPoint.buddies.length > 0 && <div className="mp-popover-meta-row"><Users size={12} /><span>Buddies: {selectedPoint.buddies.join(", ")}</span></div>}
+                  {selectedPoint.firstDive && <div className="mp-popover-meta-row"><Calendar size={12} /><span>Logged Date: {selectedPoint.firstDive?.substring(0, 10)}</span></div>}
+                </div>
+              </div>
+
+              <button className="mp-popover-action" onClick={() => navigate(`/dives/${selectedPoint.id}`)}>
+                <span>Explore Full Digital Logbook</span>
+                <ChevronRight size={14} />
+              </button>
+            </div>
+          )
+        })()}
+      </main>
     </div>
   )
 }

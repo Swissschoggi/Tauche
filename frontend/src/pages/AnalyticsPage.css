@@ -1,101 +1,170 @@
+/* ==========================================================================
+   AnalyticsPage.css  —  Advanced Dive Telemetry Styling
+   ========================================================================== */
+
 .analytics-page {
-  position: relative; 
+  padding: 24px;
+  background: #0f172a;
   min-height: 100vh;
-  width: 100%;
-  padding: 80px 16px 40px 16px;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  background: transparent;
+  color: #caf0f8;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   box-sizing: border-box;
 }
 
+.back-dashboard-global-btn,
+.nav-settings-global-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  color: #94a3b8;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  margin-right: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.back-dashboard-global-btn:hover,
+.nav-settings-global-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #f1f5f9;
+}
+
 .analytics-container {
-  width: 100%;
-  max-width: 750px;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  margin-top: 20px;
+  max-width: 1100px;
+  margin: 32px auto 0 auto;
 }
 
 .analytics-header h2 {
-  font-size: 26px;
-  color: #f8fafc;
+  font-size: 24px;
   font-weight: 700;
-  margin-bottom: 4px;
+  color: #f1f5f9;
+  margin: 0 0 24px 0;
+  letter-spacing: -0.5px;
 }
 
-.analytics-header p {
-  color: var(--muted);
-  font-size: 14px;
+/* ── Safety Violation Alert Banner ── */
+.analytics-warning-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  padding: 12px 16px;
+  border-radius: 12px;
+  color: #f87171;
+  margin-bottom: 20px;
+  animation: mp-banner-entrance 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+@keyframes mp-banner-entrance {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Metrics Strip Counters ── */
 .stats-strip {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 16px;
+  margin-bottom: 24px;
 }
 
 .stat-pill {
-  background: rgba(17, 24, 39, 0.6);
-  border: 1px solid rgba(144, 224, 239, 0.08);
-  padding: 16px;
-  border-radius: 16px;
   display: flex;
   align-items: center;
-  gap: 14px;
-  backdrop-filter: blur(10px);
+  gap: 16px;
+  background: rgba(30, 41, 59, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 18px;
 }
 
 .stat-pill svg {
-  color: var(--accent);
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.stat-pill.highlight-sac-pill {
+  background: rgba(56, 189, 248, 0.03);
+  border-color: rgba(56, 189, 248, 0.12);
 }
 
 .pill-label {
   display: block;
   font-size: 11px;
-  color: var(--muted);
   text-transform: uppercase;
+  color: #64748b;
+  font-weight: 600;
   letter-spacing: 0.5px;
 }
 
 .pill-val {
   display: block;
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 700;
-  color: #caf0f8;
-  margin-top: 2px;
+  color: #f1f5f9;
+  margin-top: 4px;
+}
+
+/* ── Layout Architect Grids ── */
+.analytics-grid-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 20px;
 }
 
 .analytics-card {
-  background: var(--surface);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 24px;
-  padding: 28px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  position: relative;
+}
+
+.analytics-card.split-layout-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .analytics-card h3 {
-  font-size: 16px;
-  color: #90e0ef;
-  margin-bottom: 24px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #f1f5f9;
+  margin: 0;
+}
+
+.card-subtext {
+  font-size: 12px;
+  color: #64748b;
+  margin: 4px 0 16px 0;
+  line-height: 1.4;
 }
 
 .empty-chart-state {
-  padding: 40px;
-  text-align: center;
-  color: var(--muted);
-  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 150px;
+  border: 1px dashed rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  color: #475569;
+  font-size: 13px;
 }
 
+/* ── SVG Timeline Profile Data Charts ── */
 .chart-canvas-wrapper {
   position: relative;
   width: 100%;
-  background: rgba(5, 10, 20, 0.3);
-  border-radius: 14px;
-  border: 1px solid rgba(144, 224, 239, 0.05);
-  padding: 8px;
+  margin-top: 10px;
 }
 
 .node-interactive {
@@ -104,134 +173,276 @@
 
 .node-anchor {
   fill: #0f172a;
-  stroke: #90e0ef;
-  stroke-width: 2.5;
-  transition: all 0.15s ease;
+  stroke: #38bdf8;
+  stroke-width: 2.5px;
+  transition: r 0.15s ease, fill 0.15s ease;
 }
 
-.node-hitbox {
-  fill: transparent;
-}
-
-.node-interactive:hover .node-anchor,
-.node-interactive.active .node-anchor {
-  fill: #34d399;
-  stroke: #fff;
+.node-interactive:hover .node-anchor {
   r: 7;
+  fill: #38bdf8;
 }
 
+/* ── Floating Live SVG Hover Tooltips ── */
 .chart-live-tooltip {
   position: absolute;
   transform: translate(-50%, -115%);
-  background: rgba(9, 15, 30, 0.95);
-  border: 1px solid #38bdf8;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(56, 189, 248, 0.25);
   border-radius: 12px;
-  padding: 10px 14px;
+  padding: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  z-index: 20;
   min-width: 180px;
   pointer-events: none;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 15px rgba(56, 189, 248, 0.15);
-  backdrop-filter: blur(8px);
-  z-index: 100;
-  animation: tooltipFadeIn 0.15s ease-out;
+  animation: tooltip-pop 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.1) both;
+}
+
+@keyframes tooltip-pop {
+  from { opacity: 0; transform: translate(-50%, -105%) scale(0.95); }
+  to { opacity: 1; transform: translate(-50%, -115%) scale(1); }
 }
 
 .tooltip-title {
-  color: #fff;
   font-size: 13px;
   font-weight: 700;
-  margin-bottom: 4px;
+  color: #f1f5f9;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .tooltip-row {
-  color: var(--muted);
   font-size: 11px;
-  margin-bottom: 6px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  color: #94a3b8;
+  margin-top: 4px;
 }
 
 .tooltip-meta {
   display: flex;
   justify-content: space-between;
-  align-items: center;
   font-size: 11px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  color: #64748b;
+  margin-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
   padding-top: 6px;
 }
 
-.highlight-depth {
+.tooltip-meta .highlight-depth {
   color: #38bdf8;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .tooltip-sac {
   display: flex;
   align-items: center;
   gap: 4px;
-  color: #38bdf8;
   font-size: 11px;
-  margin-top: 6px;
+  color: #94a3b8;
+  margin-top: 4px;
 }
 
-@keyframes tooltipFadeIn {
-  from { opacity: 0; transform: translate(-50%, -105%) scale(0.95); }
-  to { opacity: 1; transform: translate(-50%, -115%) scale(1); }
+/* ── Breathing Gas Distribution Component ── */
+.gas-bar-container {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 10px;
 }
 
-/* ADDED: Layout rules and transform animations for the dynamic records cards */
+.gas-flexbox-bar {
+  display: flex;
+  height: 16px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #1e293b;
+}
+
+.gas-legend {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-item span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.nitrox-dot { color: #34d399; }
+.nitrox-dot span { background: #34d399; }
+.air-dot { color: #38bdf8; }
+.air-dot span { background: #38bdf8; }
+
+.analytics-tip-footer {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 11px;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+/* ── Thermal Exposure Breakdown ── */
+.thermal-distribution-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.thermal-row-metric {
+  display: grid;
+  grid-template-columns: 140px 1fr 30px;
+  align-items: center;
+  gap: 12px;
+}
+
+.thermal-tag {
+  font-size: 12px;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.thermal-track {
+  height: 8px;
+  background: #1e293b;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.thermal-bar {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.thermal-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: #f1f5f9;
+  text-align: right;
+}
+
+/* ── No-Fly / Tissue Desaturation Card ── */
+.no-fly-zone-card {
+  transition: border-color 0.25s ease;
+}
+
+.no-fly-active-display {
+  margin-top: 8px;
+}
+
+.countdown-timer-value {
+  font-size: 32px;
+  font-weight: 800;
+  color: #f59e0b;
+  letter-spacing: -0.5px;
+}
+
+.countdown-timer-value .unit {
+  font-size: 14px;
+  font-weight: 500;
+  color: #94a3b8;
+  margin-left: 4px;
+}
+
+.safety-disclaimer-tag {
+  font-size: 11px;
+  color: #fbbf24;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.15);
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-top: 12px;
+  line-height: 1.4;
+}
+
+.no-fly-cleared-display {
+  margin-top: 10px;
+}
+
+.cleared-pill-badge {
+  display: inline-block;
+  background: rgba(52, 211, 153, 0.1);
+  border: 1px solid rgba(52, 211, 153, 0.2);
+  color: #34d399;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  margin-bottom: 8px;
+}
+
+.no-fly-cleared-display p {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* ── Milestone Records ── */
+.records-grid-layout {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
 .record-item-pill {
-  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), 
-              background-color 0.2s ease, 
-              border-color 0.2s ease, 
-              box-shadow 0.2s ease;
+  background: rgba(30, 41, 59, 0.4);
+  border: 1px solid rgba(56, 189, 248, 0.15);
+  border-radius: 12px;
+  padding: 16px;
+  transition: transform 0.2s ease, border-color 0.2s ease;
 }
 
 .record-item-pill:hover {
-  transform: translateY(-3px);
-  background: rgba(56, 189, 248, 0.08) !important;
-  border-color: rgba(56, 189, 248, 0.35) !important;
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+  transform: translateY(-2px);
+  background: rgba(30, 41, 59, 0.6);
+  border-color: rgba(56, 189, 248, 0.3);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
 }
 
-@media (max-width: 768px) {
-  .stats-strip {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 480px) {
-  .stats-strip {
-    grid-template-columns: 1fr;
-  }
-  .records-grid-layout {
-    grid-template-columns: 1fr !important;
-  }
-}
-
-.info-row {
-  display: flex; 
-  justify-content: space-between;
+.record-header {
+  display: flex;
   align-items: center;
-  padding: 10px 0;
-  font-size: 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  gap: 10px;
+  margin-bottom: 8px;
 }
 
-.info-row:last-of-type {
-  border-bottom: none;
-}
-
-.label {
-  color: var(--muted);
-  font-weight: 500;
-}
-
-.value {
-  color: #caf0f8; 
+.record-header span {
+  font-size: 11px;
+  color: #94a3b8;
   font-weight: 600;
-  letter-spacing: 0.25px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.record-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.record-title-sub {
+  font-size: 13px;
+  color: #64748b;
+  margin-top: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

@@ -3,6 +3,7 @@ package com.tauche.tauche.controller;
 import java.util.List;
 import java.util.Optional;
 
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -49,32 +50,23 @@ public class EquipmentController {
     }
 
     @PostMapping
-    public ResponseEntity<EquipmentDTO> addEquipmentItem(@AuthenticationPrincipal UserDetails userDetails, @RequestBody Equipment item) {
+    public ResponseEntity<EquipmentDTO> addEquipmentItem(@AuthenticationPrincipal UserDetails userDetails, @Valid @RequestBody EquipmentDTO dto) {
         log.info("=== ADD EQUIPMENT REQUEST ===");
         log.info("User email: {}", userDetails.getUsername());
-        log.info("Equipment name: {}", item.getName());
-        log.info("Equipment category: {}", item.getCategory());
         
         Diver diver = diverRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new RuntimeException("Diver profile lookup failed"));
-        log.info("Found diver ID: {}, setting on equipment", diver.getId());
         
-        item.setDiver(diver);
-        log.info("Diver set on equipment: {}", item.getDiver().getId());
+        Equipment saved = equipmentService.createEquipment(diver, dto);
         
-        Equipment saved = equipmentService.saveEquipment(item);
-        log.info("Saved equipment with ID: {}", saved.getId());
-        
-        EquipmentDTO dto = equipmentService.convertToDTO(saved);
-        log.info("Returning DTO with name: {}", dto.getName());
-        
-        return ResponseEntity.ok(dto);
+        EquipmentDTO result = equipmentService.convertToDTO(saved);
+        return ResponseEntity.ok(result);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<EquipmentDTO> updateEquipmentItem(
-            @PathVariable Long id, 
-            @RequestBody Equipment item,
+            @PathVariable Long id,
+            @Valid @RequestBody EquipmentDTO dto,
             @AuthenticationPrincipal UserDetails userDetails) {
         log.info("=== UPDATE EQUIPMENT REQUEST ===");
         log.info("Equipment ID: {}", id);
@@ -83,19 +75,23 @@ public class EquipmentController {
         Diver diver = diverRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new RuntimeException("Diver profile lookup failed"));
         
-        Optional<Equipment> updated = equipmentService.updateEquipment(id, item, diver);
+        Optional<Equipment> updated = equipmentService.updateEquipmentFromDTO(id, dto, diver);
         
         if (updated.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
         
-        EquipmentDTO dto = equipmentService.convertToDTO(updated.get());
-        return ResponseEntity.ok(dto);
+        EquipmentDTO result = equipmentService.convertToDTO(updated.get());
+        return ResponseEntity.ok(result);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> removeEquipmentItem(@PathVariable Long id) {
-        equipmentService.deleteEquipment(id);
+    public ResponseEntity<Void> removeEquipmentItem(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        Diver diver = diverRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("Diver profile lookup failed"));
+        equipmentService.deleteEquipment(id, diver);
         return ResponseEntity.noContent().build();
     }
 }

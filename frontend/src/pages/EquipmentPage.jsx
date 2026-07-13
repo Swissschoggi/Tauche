@@ -32,11 +32,29 @@ export default function EquipmentPage() {
     loadCloset()
   }, [])
 
+  function sanitizeEquipmentPayload(data) {
+    const sanitized = { ...data }
+    const numericFields = ["purchasePrice", "serviceIntervalDives", "serviceIntervalMonths"]
+    const dateFields = ["purchaseDate", "lastServiceDate"]
+    numericFields.forEach(f => {
+      if (sanitized[f] === "" || sanitized[f] === undefined || sanitized[f] === null) {
+        delete sanitized[f]
+      }
+    })
+    dateFields.forEach(f => {
+      if (sanitized[f] === "" || sanitized[f] === undefined || sanitized[f] === null) {
+        delete sanitized[f]
+      }
+    })
+    return sanitized
+  }
+
   async function handleAdd(e) {
     e.preventDefault()
-    if (!newItem.name || !newItem.lastServiceDate) return
+    if (!newItem.name) return
     try {
-      await addEquipmentItem(newItem)
+      const payload = sanitizeEquipmentPayload(newItem)
+      await addEquipmentItem(payload)
       setShowAddModal(false)
       setNewItem({
         name: "", category: "Regulator", serialNumber: "",
@@ -52,9 +70,10 @@ export default function EquipmentPage() {
 
   async function handleUpdate(e) {
     e.preventDefault()
-    if (!editingItem.name || !editingItem.lastServiceDate) return
+    if (!editingItem.name) return
     try {
-      await updateEquipmentItem(editingItem.id, editingItem)
+      const payload = sanitizeEquipmentPayload(editingItem)
+      await updateEquipmentItem(editingItem.id, payload)
       setEditingItem(null)
       loadCloset()
     } catch (err) {
@@ -96,7 +115,7 @@ export default function EquipmentPage() {
   return (
     <div className="equipment-page">
       <div className="equipment-controls">
-        <button className="equipment-back-btn" onClick={() => navigate("/")}>← Back to Dashboard</button>
+        <button className="back-dashboard-global-btn" onClick={() => navigate("/")}>← Back to Dashboard</button>
         <button className="equipment-add-btn" onClick={() => setShowAddModal(true)}>
           <Plus size={16} /> Add Gear
         </button>
@@ -116,17 +135,26 @@ export default function EquipmentPage() {
         ) : (
           <div className="equipment-cards-layout">
             {gear.map((item) => {
-              const diveRatio = Math.max(0, Math.min(item.divesSinceLastService / item.serviceIntervalDives, 1))
+              const noService = !item.lastServiceDate
+              const diveRatio = noService ? 0 : Math.max(0, Math.min(item.divesSinceLastService / item.serviceIntervalDives, 1))
+              const timeRatio = noService ? 0 : Math.max(0, Math.min(1 - item.daysRemainingUntilService / (item.serviceIntervalMonths * 30.44), 1))
+              const timeOverdue = !noService && item.daysRemainingUntilService <= 0
+              const divesOverdue = !noService && item.divesSinceLastService >= item.serviceIntervalDives
+              const dueSoon = !noService && (diveRatio >= 0.8 || (item.daysRemainingUntilService > 0 && item.daysRemainingUntilService <= 30))
               
               let statusColor = "#22c55e"
               let statusLabel = "Good to Dive"
               let statusIcon = <CheckCircle size={14} />
 
-              if (item.requiresService) {
+              if (noService) {
+                statusColor = "#64748b"
+                statusLabel = "No Service History"
+                statusIcon = <Settings size={14} />
+              } else if (item.requiresService) {
                 statusColor = "#ef4444"
-                statusLabel = "Service Overdue"
+                statusLabel = timeOverdue && divesOverdue ? "Service Overdue" : timeOverdue ? "Time Overdue" : "Dive Count Overdue"
                 statusIcon = <ShieldAlert size={14} />
-              } else if (diveRatio >= 0.8 || item.daysRemainingUntilService <= 30) {
+              } else if (dueSoon) {
                 statusColor = "#eab308"
                 statusLabel = "Service Due"
                 statusIcon = <Settings size={14} />
@@ -187,7 +215,7 @@ export default function EquipmentPage() {
                           </div>
                           <div className="equipment-edit-field">
                             <label>Last Service Date</label>
-                            <input type="date" value={editingItem.lastServiceDate || ""} onChange={(e) => updateEditingField("lastServiceDate", e.target.value)} required />
+                            <input type="date" value={editingItem.lastServiceDate || ""} onChange={(e) => updateEditingField("lastServiceDate", e.target.value)} />
                           </div>
                         </div>
 
@@ -250,33 +278,51 @@ export default function EquipmentPage() {
                         <strong>{Math.round(item.totalMinutesWithGear / 60)}h</strong>
                       </div>
                       <div>
-                        <small>Since Service</small>
+                        <small>{noService ? "Total Dives" : "Since Service"}</small>
                         <strong style={{ color: item.requiresService ? "#ef4444" : "#cbd5e1" }}>
                           {item.divesSinceLastService}d
                         </strong>
                       </div>
                     </div>
 
-                    <div className="equipment-progress-container">
-                      <div className="equipment-progress-labels">
-                        <span>Service Threshold Limit</span>
-                        <span>{item.divesSinceLastService} / {item.serviceIntervalDives} Dives</span>
-                      </div>
-                      <div className="equipment-progress-track">
-                        <div className="equipment-progress-fill" style={{ width: `${diveRatio * 100}%`, backgroundColor: statusColor }} />
-                      </div>
-                    </div>
+                    {!noService && (
+                      <>
+                        <div className="equipment-progress-container">
+                          <div className="equipment-progress-labels">
+                            <span>Dive Count</span>
+                            <span>{item.divesSinceLastService} / {item.serviceIntervalDives} dives</span>
+                          </div>
+                          <div className="equipment-progress-track">
+                            <div className="equipment-progress-fill" style={{ width: `${diveRatio * 100}%`, backgroundColor: divesOverdue ? "#ef4444" : diveRatio >= 0.8 ? "#eab308" : "#22c55e" }} />
+                          </div>
+                        </div>
+                        <div className="equipment-progress-container" style={{ marginTop: 6 }}>
+                          <div className="equipment-progress-labels">
+                            <span>Time Interval</span>
+                            <span>{item.serviceIntervalMonths}mo · {item.daysRemainingUntilService > 0 ? `${item.daysRemainingUntilService} days left` : `${Math.abs(item.daysRemainingUntilService)} days overdue`}</span>
+                          </div>
+                          <div className="equipment-progress-track">
+                            <div className="equipment-progress-fill" style={{ width: `${timeRatio * 100}%`, backgroundColor: timeOverdue ? "#ef4444" : dueSoon && !divesOverdue ? "#eab308" : "#22c55e" }} />
+                          </div>
+                        </div>
+                      </>
+                    )}
 
-                    {item.daysRemainingUntilService <= 0 && (
+                    {timeOverdue && (
                       <div className="equipment-service-warning">
-                        <AlertTriangle size={12} /> Service is overdue!
+                        <AlertTriangle size={12} /> Time interval expired — last service was {item.lastServiceDate}
+                      </div>
+                    )}
+                    {divesOverdue && !timeOverdue && (
+                      <div className="equipment-service-warning">
+                        <AlertTriangle size={12} /> Dive count exceeded ({item.divesSinceLastService} / {item.serviceIntervalDives})
                       </div>
                     )}
                   </div>
 
                   <div className="equipment-meta-row">
-                    <span><Calendar size={12} /> Last Serviced: {item.lastServiceDate}</span>
-                    {item.daysRemainingUntilService > 0 && (
+                    <span><Calendar size={12} /> {item.lastServiceDate ? `Last Serviced: ${item.lastServiceDate}` : "No service history"}</span>
+                    {item.lastServiceDate && item.daysRemainingUntilService > 0 && (
                       <span>Expires in: {item.daysRemainingUntilService} days</span>
                     )}
                   </div>
@@ -338,9 +384,9 @@ export default function EquipmentPage() {
                   <label>Purchase Date</label>
                   <input type="date" value={newItem.purchaseDate} onChange={(e) => setNewItem(p => ({ ...p, purchaseDate: e.target.value }))} />
                 </div>
-                <div className="equipment-form-group">
-                  <label>Last Service Date *</label>
-                  <input type="date" value={newItem.lastServiceDate} onChange={(e) => setNewItem(p => ({ ...p, lastServiceDate: e.target.value }))} required />
+                  <div className="equipment-form-group">
+                    <label>Last Service Date</label>
+                    <input type="date" value={newItem.lastServiceDate} onChange={(e) => setNewItem(p => ({ ...p, lastServiceDate: e.target.value }))} />
                 </div>
               </div>
 

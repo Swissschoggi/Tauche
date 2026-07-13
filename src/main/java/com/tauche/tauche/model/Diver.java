@@ -35,9 +35,17 @@ public class Diver implements UserDetails {
     @Column(length = 60)
     private String password;
 
+    @Column(length = 20)
+    @Builder.Default
+    private String role = "USER";
+
+    @Builder.Default
+    private boolean enabled = true;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_USER"));
+        String r = (role != null && !role.isBlank()) ? role : "USER";
+        return List.of(new SimpleGrantedAuthority("ROLE_" + r));
     }
 
     @Override
@@ -52,5 +60,5 @@ public class Diver implements UserDetails {
     @Override
     public boolean isCredentialsNonExpired() { return true; }
     @Override
-    public boolean isEnabled() { return true; }
+    public boolean isEnabled() { return enabled; }
 }

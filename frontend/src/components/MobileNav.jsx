@@ -1,39 +1,32 @@
-import { useState } from 'react'
-import { Menu, X } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { Home, PlusCircle, Map, BarChart3 } from 'lucide-react'
+
+const primaryItems = [
+  { label: 'Home',   path: '/',                icon: Home },
+  { label: 'New',    path: '/new',             icon: PlusCircle },
+  { label: 'Map',    path: '/map',             icon: Map },
+  { label: 'Stats',  path: '/analytics',       icon: BarChart3 },
+]
 
 export default function MobileNav() {
-  const [isOpen, setIsOpen] = useState(false)
   const navigate = useNavigate()
-  
-  const navItems = [
-    { label: 'Home', path: '/' },
-    { label: 'New Dive', path: '/new' },
-    { label: 'Map', path: '/map' },
-    { label: 'Analytics', path: '/analytics' },
-    { label: 'Equipment', path: '/equipment' },
-    { label: 'Certifications', path: '/certification' },
-    { label: 'Trips', path: '/trips' },
-    { label: 'Profile', path: '/profile' }
-  ]
-  
+  const location = useLocation()
+
   return (
     <nav className="mobile-nav">
-      <button onClick={() => setIsOpen(!isOpen)}>
-        {isOpen ? <X /> : <Menu />}
-      </button>
-      {isOpen && (
-        <div className="mobile-menu">
-          {navItems.map(item => (
-            <button 
-              key={item.path}
-              onClick={() => { navigate(item.path); setIsOpen(false) }}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
-      )}
+      {primaryItems.map(item => {
+        const active = location.pathname === item.path
+        return (
+          <button
+            key={item.path}
+            className={`mobile-tab ${active ? 'mobile-tab--active' : ''}`}
+            onClick={() => navigate(item.path)}
+          >
+            <item.icon size={20} />
+            <span>{item.label}</span>
+          </button>
+        )
+      })}
     </nav>
   )
 }

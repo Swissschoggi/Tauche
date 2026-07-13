@@ -2,20 +2,40 @@ package com.tauche.tauche.dto;
 
 import java.time.LocalDate;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
 public class EquipmentDTO {
     private Long id;
+
+    @NotBlank
+    @Size(max = 100)
     private String name;
+
+    @NotBlank
+    @Size(max = 50)
     private String category;
+    @Size(max = 100)
     private String serialNumber;
+
     private LocalDate purchaseDate;
     private LocalDate lastServiceDate;
     private Integer serviceIntervalDives;
     private Integer serviceIntervalMonths;
     private Boolean isActive;
+
+    @Size(max = 2000)
     private String notes;
+
+    @Size(max = 100)
     private String manufacturer;
+
+    @Size(max = 100)
     private String model;
+
     private Double purchasePrice;
+
+    @Size(max = 2000)
     private String lastServiceNotes;
 
     private long totalDivesWithGear;

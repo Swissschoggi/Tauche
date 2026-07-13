@@ -52,7 +52,7 @@ public class Equipment {
     @Column(name = "purchase_date")
     private LocalDate purchaseDate;
 
-    @Column(name = "last_service_date", nullable = false)
+    @Column(name = "last_service_date")
     private LocalDate lastServiceDate;
 
     @Column(name = "service_interval_dives")

@@ -15,6 +15,8 @@ import com.tauche.tauche.model.Equipment;
 public interface EquipmentRepository extends JpaRepository<Equipment, Long> {
     List<Equipment> findByDiverAndIsActiveTrue(Diver diver);
 
+    long count();
+
     @Query("SELECT COUNT(d) FROM DiveLog d JOIN d.equipmentUsed e WHERE e.id = :equipmentId")
     long countTotalDivesByEquipmentId(@Param("equipmentId") Long equipmentId);
 

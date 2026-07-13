@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react"
 import { useNavigate, useParams } from "react-router-dom"
-import { createDive, updateDive, getDiveById, getEquipmentCloset } from "../api/diveApi"
+import { createDive, updateDive, getDiveById, getEquipmentCloset, getBuddies } from "../api/diveApi"
 import { diveFormSchema } from "../form/diveFormSchema"
 import { Settings } from "lucide-react"
 import { TANK_PRESETS } from '../constants/tankPresets'
@@ -25,10 +25,12 @@ export default function DiveFormPage() {
 
   const [suggestions, setSuggestions] = useState([])
   const [showSuggestions, setShowSuggestions] = useState(false)
+  const [showBuddySuggestions, setShowBuddySuggestions] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formError, setFormError] = useState("")
   const [availableEquipment, setAvailableEquipment] = useState([])
   const [showTankPresets, setShowTankPresets] = useState(false)
+  const [buddyList, setBuddyList] = useState([])
 
   useEffect(() => {
     async function loadEquipment() {
@@ -40,6 +42,18 @@ export default function DiveFormPage() {
       }
     }
     loadEquipment()
+  }, [])
+
+  useEffect(() => {
+    async function loadBuddies() {
+      try {
+        const buddies = await getBuddies()
+        setBuddyList(Array.isArray(buddies) ? buddies : [])
+      } catch (err) {
+        console.error("Failed to load buddies:", err)
+      }
+    }
+    loadBuddies()
   }, [])
 
   useEffect(() => {
@@ -152,6 +166,21 @@ export default function DiveFormPage() {
 
     if (!payload.diveTitle || !payload.date) {
       setFormError("Dive Title and Date are required.")
+      setIsSubmitting(false)
+      return
+    }
+    if (!payload.location) {
+      setFormError("Location is required.")
+      setIsSubmitting(false)
+      return
+    }
+    if (!payload.depthMeters) {
+      setFormError("Depth (m) is required.")
+      setIsSubmitting(false)
+      return
+    }
+    if (!payload.durationMinutes) {
+      setFormError("Duration (min) is required.")
       setIsSubmitting(false)
       return
     }
@@ -323,6 +352,36 @@ export default function DiveFormPage() {
                             }}
                           >
                             {s.display_name}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : field.name === "buddy" ? (
+                  <div style={{ position: "relative" }}>
+                    <input
+                      id={field.name}
+                      name={field.name}
+                      type="text"
+                      value={form.buddy || ""}
+                      onChange={handleChange}
+                      onFocus={() => setShowBuddySuggestions(true)}
+                      onBlur={() => setTimeout(() => setShowBuddySuggestions(false), 200)}
+                      disabled={isSubmitting}
+                      placeholder="Type a name or select a buddy..."
+                    />
+                    {showBuddySuggestions && buddyList.length > 0 && (
+                      <div className="suggestions">
+                        {buddyList.map(b => (
+                          <div
+                            key={b.id}
+                            className="suggestion-item"
+                            onMouseDown={() => {
+                              setForm(prev => ({ ...prev, buddy: b.buddyEmail }))
+                              setShowBuddySuggestions(false)
+                            }}
+                          >
+                            {b.buddyEmail}
                           </div>
                         ))}
                       </div>

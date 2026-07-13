@@ -3,12 +3,49 @@
    ========================================================================== */
 
 .analytics-page {
-  padding: 24px;
-  background: #0f172a;
-  min-height: 100vh;
+  max-width: var(--page-max-width);
+  margin: 0 auto;
+  padding: var(--page-padding);
   color: #caf0f8;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   box-sizing: border-box;
+}
+
+.analytics-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 60vh;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.analytics-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(56, 189, 248, 0.12);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: analytics-spin 0.7s linear infinite;
+}
+
+@keyframes analytics-spin { to { transform: rotate(360deg); } }
+
+.analytics-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 40vh;
+  border: 1px dashed rgba(144, 224, 239, 0.2);
+  border-radius: var(--card-radius);
+  padding: 60px 24px;
+  color: var(--muted);
+  font-size: 14px;
+  text-align: center;
 }
 
 .back-dashboard-global-btn,
@@ -121,11 +158,11 @@
 }
 
 .analytics-card {
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 16px;
+  background: var(--card-bg);
+  border: var(--card-border);
+  border-radius: var(--card-radius);
   padding: 24px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--card-shadow);
   position: relative;
 }
 
@@ -446,3 +483,45 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+@media (max-width: 768px) {
+  .analytics-page {
+    padding: 80px 12px 20px 12px;
+  }
+
+  .analytics-grid-row {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .stats-strip {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .stat-pill {
+    padding: 10px;
+  }
+
+  .pill-label {
+    font-size: 9px;
+  }
+
+  .pill-val {
+    font-size: 16px;
+  }
+
+  .analytics-card {
+    padding: 16px;
+  }
+
+  .chart-live-tooltip {
+    min-width: 120px;
+  }
+
+  .thermal-row-metric {
+    grid-template-columns: 100px 1fr 28px;
+    gap: 8px;
+  }
+}
+

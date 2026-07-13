@@ -13,4 +13,6 @@ public class LoginRequest {
     private String email;
     private String password;
     private String nonce;
+    private Boolean passwordHashed;
+    private Boolean legacy;
 }

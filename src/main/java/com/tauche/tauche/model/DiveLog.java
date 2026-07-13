@@ -26,6 +26,7 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -46,7 +47,8 @@ public class DiveLog {
     private Long id;
 
     @NotBlank
-    @Column(nullable = false)
+    @Size(max = 200)
+    @Column(nullable = false, length = 200)
     private String diveTitle;
 
     @NotNull
@@ -54,7 +56,8 @@ public class DiveLog {
     private LocalDate date;
 
     @NotBlank
-    @Column(nullable = false)
+    @Size(max = 500)
+    @Column(nullable = false, length = 500)
     private String location;
 
     private Double latitude;
@@ -66,6 +69,8 @@ public class DiveLog {
     @Enumerated(EnumType.STRING)
     private DivePurpose divePurpose;
 
+    @Size(max = 200)
+    @Column(length = 200)
     private String diveSite;
 
     @NotNull
@@ -86,8 +91,14 @@ public class DiveLog {
     @Enumerated(EnumType.STRING)
     private WaterType waterType;
 
+    @Size(max = 100)
+    @Column(length = 100)
     private String weather;
+
+    @Size(max = 100)
+    @Column(length = 100)
     private String suit;
+
     private Double weightKg;
 
     @Enumerated(EnumType.STRING)
@@ -96,12 +107,20 @@ public class DiveLog {
     private Double pressureStartBar;
     private Double pressureEndBar;
 
+    @Size(max = 200)
+    @Column(length = 200)
     private String buddy;
+
+    @Size(max = 200)
+    @Column(length = 200)
     private String diveCenter;
 
-    @Column(length = 2000)
+    @Size(max = 5000)
+    @Column(length = 5000)
     private String notes;
 
+    @Size(max = 500)
+    @Column(length = 500)
     private String imagePath;
 
     @ManyToOne(fetch = FetchType.LAZY)

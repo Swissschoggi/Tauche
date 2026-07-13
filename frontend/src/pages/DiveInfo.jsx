@@ -185,6 +185,23 @@ export default function DiveInfo() {
   async function handleSave() {
     try {
       let currentDiveState = { ...formData }
+
+      if (!currentDiveState.diveTitle || !currentDiveState.date) {
+        alert("Dive Title and Date are required.")
+        return
+      }
+      if (!currentDiveState.location) {
+        alert("Location is required.")
+        return
+      }
+      if (currentDiveState.depthMeters === "" || currentDiveState.depthMeters == null) {
+        alert("Depth is required.")
+        return
+      }
+      if (currentDiveState.durationMinutes === "" || currentDiveState.durationMinutes == null) {
+        alert("Duration is required.")
+        return
+      }
       
       if (mainImageFile) {
         try {
@@ -367,7 +384,7 @@ export default function DiveInfo() {
           <div className="info-row">
             <div className="info-row-left"><MapPin size={16} /><span className="label">Location:</span></div>
             {isEditing ? (
-              <div style={{ position: "relative", flex: 1, width: "100%" }}>
+              <div style={{ position: "relative", flex: 1, width: "100%", minWidth: 0 }}>
                 <input className="info-row-input" value={formData.location || ""} onChange={(e) => { setFormData((p) => ({ ...p, location: e.target.value })); setShowSuggestions(true); }} onFocus={() => setShowSuggestions(true)} onBlur={() => setTimeout(() => setShowSuggestions(false), 150)} />
                 {showSuggestions && suggestions.length > 0 && (
                   <div className="suggestions">
@@ -421,7 +438,8 @@ export default function DiveInfo() {
                     border: "1px solid rgba(144, 224, 239, 0.15)",
                     borderRadius: "8px",
                     color: "#caf0f8",
-                    padding: "8px"
+                    padding: "8px",
+                    boxSizing: "border-box"
                   }}
                 >
                   {availableEquipment.length === 0 && (

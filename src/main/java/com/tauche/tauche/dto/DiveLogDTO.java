@@ -10,6 +10,10 @@ import com.tauche.tauche.model.DivePurpose;
 import com.tauche.tauche.model.DiveType;
 import com.tauche.tauche.model.WaterType;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -17,29 +21,61 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class DiveLogDTO {
     private Long id;
+
+    @NotBlank
+    @Size(max = 200)
     private String diveTitle;
+
+    @NotNull
     private LocalDate date;
+
+    @NotBlank
+    @Size(max = 500)
     private String location;
+
     private Double latitude;
     private Double longitude;
     private DiveType diveType;
     private DivePurpose divePurpose;
+
+    @Size(max = 200)
     private String diveSite;
+
+    @NotNull
+    @Positive
     private Double depthMeters;
+
     private Double cylinderVolumeLiters;
+
+    @NotNull
+    @Positive
     private Integer durationMinutes;
+
     private Double waterTemperatureCelsius;
     private Double visibilityMeters;
     private WaterType waterType;
+
+    @Size(max = 100)
     private String weather;
+
+    @Size(max = 100)
     private String suit;
+
     private Double weightKg;
     private DiveGas gas;
     private Double pressureStartBar;
     private Double pressureEndBar;
+
+    @Size(max = 200)
     private String buddy;
+
+    @Size(max = 200)
     private String diveCenter;
+
+    @Size(max = 5000)
     private String notes;
+
+    @Size(max = 500)
     private String imagePath;
     private List<SimpleEquipmentDTO> equipmentUsed = new ArrayList<>();
     private List<Long> equipmentIds = new ArrayList<>();

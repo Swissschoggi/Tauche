@@ -33,6 +33,9 @@ public class DiveLogService {
     }
 
     public DiveLog create(DiveLog diveLog) {
+        if (diveLog.getNotes() != null) {
+            diveLog.setNotes(stripHtml(diveLog.getNotes()));
+        }
         return repository.save(diveLog);
     }
 
@@ -62,7 +65,7 @@ public class DiveLogService {
         existing.setPressureEndBar(incomingData.getPressureEndBar());
         existing.setBuddy(incomingData.getBuddy());
         existing.setDiveCenter(incomingData.getDiveCenter());
-        existing.setNotes(incomingData.getNotes());
+        existing.setNotes(incomingData.getNotes() != null ? stripHtml(incomingData.getNotes()) : null);
         existing.setLatitude(incomingData.getLatitude());
         existing.setLongitude(incomingData.getLongitude());
         existing.setShareToken(incomingData.getShareToken());
@@ -93,5 +96,30 @@ public class DiveLogService {
     
     public Optional<DiveLog> findByShareToken(String token) {
         return repository.findByShareToken(token);
+    }
+
+    private String stripHtml(String input) {
+        if (input == null) return null;
+        String safe = input
+            .replaceAll("(?i)<script[^>]*>.*?</script>", "")
+            .replaceAll("(?i)<iframe[^>]*>.*?</iframe>", "")
+            .replaceAll("(?i)<object[^>]*>.*?</object>", "")
+            .replaceAll("(?i)<embed[^>]*>.*?</embed>", "")
+            .replaceAll("(?i)<style[^>]*>.*?</style>", "")
+            .replaceAll("(?i)<link[^>]*>", "")
+            .replaceAll("(?i)<meta[^>]*>", "")
+            .replaceAll("(?i)<form[^>]*>.*?</form>", "")
+            .replaceAll("(?i)<input[^>]*>", "")
+            .replaceAll("(?i)<button[^>]*>.*?</button>", "")
+            .replaceAll("(?i)<textarea[^>]*>.*?</textarea>", "")
+            .replaceAll("(?i)<select[^>]*>.*?</select>", "")
+            .replaceAll("(?i)<option[^>]*>.*?</option>", "")
+            .replaceAll("(?i)on\\w+\\s*=\\s*\"[^\"]*\"", "")
+            .replaceAll("(?i)on\\w+\\s*=\\s*'[^']*'", "")
+            .replaceAll("(?i)on\\w+\\s*=\\s*[^\\s>/]+", "")
+            .replaceAll("(?i)javascript\\s*:", "")
+            .replaceAll("(?i)data\\s*:", "")
+            .trim();
+        return safe;
     }
 }

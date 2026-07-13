@@ -1,12 +1,7 @@
 .settings-page {
-  position: relative;
   min-height: 100vh;
-  width: 100%;
-  padding: 100px 24px 40px 24px; 
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: transparent;
+  min-height: 100dvh;
+  padding: var(--page-padding);
   font-family: 'Inter', system-ui, sans-serif;
 }
 
@@ -37,11 +32,10 @@
 }
 
 .settings-card, .sidebar-node {
-  background: rgba(17, 24, 39, 0.6);
-  border: 1px solid rgba(144, 224, 239, 0.08);
-  border-radius: 16px;
+  background: var(--card-bg);
+  border: var(--card-border);
+  border-radius: var(--card-radius);
   padding: 24px;
-  backdrop-filter: blur(10px);
 }
 
 .settings-card h3, .sidebar-node h4 {

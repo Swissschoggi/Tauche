@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Tag, Camera, Plus, Trash2, Loader } from 'lucide-react'
 import { getGalleryImages, uploadGalleryImage, deleteGalleryImage, updateGalleryImageTags, getImageUrl } from '../api/diveApi'
+import PhotoLightbox from '../components/PhotoLightbox'
 import './PhotoGallery.css'
 
 const COMMON_SPECIES = [
@@ -17,7 +18,7 @@ export default function PhotoGallery({ diveId }) {
   const [photos, setPhotos] = useState([])
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
-  const [selectedPhoto, setSelectedPhoto] = useState(null)
+  const [lightboxIndex, setLightboxIndex] = useState(null)
   const [tagInput, setTagInput] = useState('')
   const [taggingPhotoId, setTaggingPhotoId] = useState(null)
   const [customTags, setCustomTags] = useState([])
@@ -156,7 +157,7 @@ export default function PhotoGallery({ diveId }) {
               <img 
                 src={photo.url} 
                 alt="Gallery" 
-                onClick={() => setSelectedPhoto(photo.url)}
+                onClick={() => setLightboxIndex(photos.indexOf(photo))}
                 onError={(e) => {
                   console.error('Failed to load image:', photo.imagePath)
                   e.target.src = 'https://placehold.co/100x100?text=Error'
@@ -187,11 +188,13 @@ export default function PhotoGallery({ diveId }) {
         </div>
       )}
 
-      {selectedPhoto && (
-        <div className="lightbox" onClick={() => setSelectedPhoto(null)}>
-          <img src={selectedPhoto} alt="Full view" />
-          <button className="lightbox-close" onClick={() => setSelectedPhoto(null)}>×</button>
-        </div>
+      {lightboxIndex !== null && (
+        <PhotoLightbox
+          photos={photos}
+          currentIndex={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+          onNavigate={(i) => setLightboxIndex(i)}
+        />
       )}
 
       {taggingPhotoId && (

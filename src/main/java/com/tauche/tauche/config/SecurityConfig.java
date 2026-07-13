@@ -37,7 +37,12 @@ public class SecurityConfig {
         http
             .cors(cors -> cors.configurationSource(request -> {
                 CorsConfiguration config = new CorsConfiguration();
-                config.setAllowedOrigins(allowedOrigins);
+                String origin = request.getHeader("Origin");
+                if (origin != null && !origin.isBlank()) {
+                    config.setAllowedOriginPatterns(List.of("*"));
+                } else {
+                    config.setAllowedOrigins(allowedOrigins);
+                }
                 config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                 config.setAllowedHeaders(List.of("*"));
                 config.setAllowCredentials(true);
@@ -51,11 +56,39 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/", "/index.html", "/static/**", "/assets/**", "/favicon.ico", "/favicon.svg").permitAll()
                 .requestMatchers("/api/auth/nonce", "/api/auth/login", "/api/auth/register", "/api/config").permitAll()
+                .requestMatchers("/api/dive-shops/**").permitAll()
                 .requestMatchers("/share/**", "/api/dives/share/**").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/uploads/**").permitAll()
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .requestMatchers("/api/**").authenticated()
+                .requestMatchers("/actuator/**", "/env/**", "/heapdump/**",
+                    "/swagger-ui/**", "/v3/api-docs/**",
+                    "/h2-console/**", "/console/**",
+                    "/*.env", "/*.yml", "/*.yaml",
+                    "/.env.*", "/application.properties").denyAll()
                 .anyRequest().permitAll()
+            )
+            .headers(headers -> headers
+                .xssProtection(xss -> xss
+                    .headerValue(org.springframework.security.web.header.writers.XXssProtectionHeaderWriter.HeaderValue.ENABLED_MODE_BLOCK)
+                )
+                .contentSecurityPolicy(csp -> csp
+                    .policyDirectives("default-src 'self'; "
+                        + "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+                        + "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+                        + "font-src 'self' https://fonts.gstatic.com; "
+                        + "img-src 'self' data: https:; "
+                        + "connect-src 'self' https://nominatim.openstreetmap.org https://overpass-api.de; "
+                        + "frame-src 'self'; "
+                        + "media-src 'self' data:; ")
+                )
+                .frameOptions(frame -> frame.sameOrigin())
+                .contentTypeOptions(org.springframework.security.config.Customizer.withDefaults())
+                .httpStrictTransportSecurity(hsts -> hsts
+                    .includeSubDomains(true)
+                    .maxAgeInSeconds(31536000)
+                )
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 

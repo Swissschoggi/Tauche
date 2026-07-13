@@ -18,4 +18,7 @@ public interface DiveLogRepository extends JpaRepository<DiveLog, Long> {
     List<DiveLog> findByDiverIdWithEquipment(@Param("diverId") Long diverId);
     Optional<DiveLog> findByShareToken(String shareToken);
 
+    long countByDiverId(Long diverId);
+
+    long count();
 }

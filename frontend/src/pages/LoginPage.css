@@ -2,6 +2,7 @@
   position: relative;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -139,4 +140,39 @@
   margin-top: 24px;
   font-size: 13px;
   align-self: center; 
+}
+
+@media (max-width: 480px) {
+  .login-page-wrapper {
+    align-items: center;
+    padding: 20px;
+  }
+
+  .login-card {
+    padding: 28px 20px;
+    border-radius: 20px;
+  }
+
+  .login-header {
+    margin-bottom: 24px;
+  }
+
+  .login-header h2 {
+    font-size: 20px;
+  }
+
+  .login-card input {
+    padding: 14px 16px;
+  }
+
+  .login-submit-btn {
+    padding: 16px;
+    font-size: 16px;
+  }
+}
+
+@supports (-webkit-touch-callout: none) {
+  .login-page-wrapper {
+    height: -webkit-fill-available;
+  }
 }

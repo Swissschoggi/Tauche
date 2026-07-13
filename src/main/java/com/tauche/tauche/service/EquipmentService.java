@@ -15,7 +15,9 @@ import com.tauche.tauche.model.Equipment;
 import com.tauche.tauche.repository.EquipmentRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class EquipmentService {
@@ -25,7 +27,7 @@ public class EquipmentService {
     @Transactional(readOnly = true)
     public List<EquipmentDTO> getEquipmentClosetForDiver(Diver diver) {
         List<Equipment> items = equipmentRepository.findByDiverAndIsActiveTrue(diver);
-        System.out.println("Found " + items.size() + " equipment items for diver");
+        log.info("Found {} equipment items for diver {}", items.size(), diver.getId());
         return items.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
@@ -35,8 +37,28 @@ public class EquipmentService {
             equipment.setIsActive(true);
         }
         Equipment saved = equipmentRepository.save(equipment);
-        System.out.println("Saved equipment with ID: " + saved.getId() + ", isActive: " + saved.getIsActive());
+        log.info("Saved equipment with ID: {}, isActive: {}", saved.getId(), saved.getIsActive());
         return saved;
+    }
+
+    @Transactional
+    public Equipment createEquipment(Diver diver, EquipmentDTO dto) {
+        Equipment item = new Equipment();
+        item.setDiver(diver);
+        item.setName(dto.getName());
+        item.setCategory(dto.getCategory());
+        item.setSerialNumber(dto.getSerialNumber());
+        item.setManufacturer(dto.getManufacturer());
+        item.setModel(dto.getModel());
+        item.setPurchaseDate(dto.getPurchaseDate());
+        item.setPurchasePrice(dto.getPurchasePrice());
+        item.setLastServiceDate(dto.getLastServiceDate());
+        item.setLastServiceNotes(dto.getLastServiceNotes());
+        item.setServiceIntervalDives(dto.getServiceIntervalDives());
+        item.setServiceIntervalMonths(dto.getServiceIntervalMonths());
+        item.setNotes(dto.getNotes());
+        item.setIsActive(true);
+        return equipmentRepository.save(item);
     }
 
     @Transactional
@@ -63,16 +85,45 @@ public class EquipmentService {
     }
 
     @Transactional
-    public void deleteEquipment(Long id) {
-        equipmentRepository.findById(id).ifPresent(item -> {
-            item.setIsActive(false); 
+    public Optional<Equipment> updateEquipmentFromDTO(Long id, EquipmentDTO dto, Diver diver) {
+        return equipmentRepository.findById(id)
+                .map(existing -> {
+                    if (!existing.getDiver().getId().equals(diver.getId())) {
+                        throw new RuntimeException("Not authorized to edit this equipment");
+                    }
+                    existing.setName(dto.getName());
+                    existing.setCategory(dto.getCategory());
+                    existing.setSerialNumber(dto.getSerialNumber());
+                    existing.setManufacturer(dto.getManufacturer());
+                    existing.setModel(dto.getModel());
+                    existing.setPurchaseDate(dto.getPurchaseDate());
+                    existing.setPurchasePrice(dto.getPurchasePrice());
+                    existing.setLastServiceDate(dto.getLastServiceDate());
+                    existing.setLastServiceNotes(dto.getLastServiceNotes());
+                    existing.setServiceIntervalDives(dto.getServiceIntervalDives());
+                    existing.setServiceIntervalMonths(dto.getServiceIntervalMonths());
+                    existing.setNotes(dto.getNotes());
+                    return equipmentRepository.save(existing);
+                });
+    }
+
+    @Transactional
+    public void deleteEquipment(Long id, Diver diver) {
+        equipmentRepository.findById(id).ifPresentOrElse(item -> {
+            if (!item.getDiver().getId().equals(diver.getId())) {
+                log.warn("Unauthorized delete attempt by diver {} on equipment {}", diver.getId(), id);
+                throw new RuntimeException("Not authorized to delete this equipment");
+            }
+            item.setIsActive(false);
             equipmentRepository.save(item);
-            System.out.println("Deactivated equipment with ID: " + id);
+            log.info("Deactivated equipment with ID: {}", id);
+        }, () -> {
+            log.warn("Equipment with ID {} not found", id);
         });
     }
 
     public EquipmentDTO convertToDTO(Equipment item) {
-        System.out.println("Converting equipment to DTO: " + item.getName());
+        log.debug("Converting equipment to DTO: {}", item.getName());
         
         EquipmentDTO dto = new EquipmentDTO();
         dto.setId(item.getId());
@@ -92,19 +143,26 @@ public class EquipmentService {
 
         long totalDives = equipmentRepository.countTotalDivesByEquipmentId(item.getId());
         long totalMins = equipmentRepository.sumTotalMinutesByEquipmentId(item.getId());
-        long divesSinceService = equipmentRepository.countDivesSinceService(item.getId(), item.getLastServiceDate());
 
         dto.setTotalDivesWithGear(totalDives);
         dto.setTotalMinutesWithGear(totalMins);
-        dto.setDivesSinceLastService(divesSinceService);
 
-        LocalDate nextServiceByDate = item.getLastServiceDate().plusMonths(item.getServiceIntervalMonths());
-        long daysRemaining = ChronoUnit.DAYS.between(LocalDate.now(), nextServiceByDate);
-        dto.setDaysRemainingUntilService(daysRemaining);
+        if (item.getLastServiceDate() == null) {
+            dto.setDivesSinceLastService(totalDives);
+            dto.setDaysRemainingUntilService(Long.MAX_VALUE);
+            dto.setRequiresService(false);
+        } else {
+            long divesSinceService = equipmentRepository.countDivesSinceService(item.getId(), item.getLastServiceDate());
+            dto.setDivesSinceLastService(divesSinceService);
 
-        boolean timeExpired = daysRemaining <= 0;
-        boolean countExpired = divesSinceService >= item.getServiceIntervalDives();
-        dto.setRequiresService(timeExpired || countExpired);
+            LocalDate nextServiceByDate = item.getLastServiceDate().plusMonths(item.getServiceIntervalMonths());
+            long daysRemaining = ChronoUnit.DAYS.between(LocalDate.now(), nextServiceByDate);
+            dto.setDaysRemainingUntilService(daysRemaining);
+
+            boolean timeExpired = daysRemaining <= 0;
+            boolean countExpired = divesSinceService >= item.getServiceIntervalDives();
+            dto.setRequiresService(timeExpired || countExpired);
+        }
 
         return dto;
     }

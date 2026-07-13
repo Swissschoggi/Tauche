@@ -8,6 +8,7 @@
   width: 100%;
   height: 100%;
   min-height: calc(100vh - 20px);
+  min-height: calc(100dvh - 20px);
   background: #0f172a;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   color: #caf0f8;
@@ -169,6 +170,7 @@
   width: 100%;
   overflow: hidden;
   background: #090d16;
+  touch-action: none;
 }
 
 /* ── Contextual Glassmorphism Hover Overlay Cards ── */
@@ -699,3 +701,108 @@
 }
 
 .mp-popover-action:hover { background: rgba(56, 189, 248, 0.08); }
+
+/* ==========================================================================
+   MOBILE RESPONSIVE OVERRIDES
+   ========================================================================== */
+@media (max-width: 768px) {
+  .mp-dashboard-header {
+    padding: 8px 10px;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .mp-header-left > .mp-header-divider,
+  .mp-header-left > div:last-child .mp-page-subtitle {
+    display: none;
+  }
+
+  .mp-page-title {
+    font-size: 13px;
+  }
+
+  .mp-header-actions {
+    gap: 3px;
+  }
+
+  .mp-action-tab {
+    padding: 8px;
+    font-size: 11px;
+    gap: 4px;
+    min-width: 36px;
+    justify-content: center;
+  }
+
+  .mp-action-tab span {
+    display: none;
+  }
+
+  .mp-floating-panel {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: auto;
+    width: auto;
+    max-height: 55dvh;
+    border-radius: 14px 14px 0 0;
+  }
+
+  .mp-popover-card {
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    width: auto;
+  }
+
+  .mp-popover-close {
+    width: 34px;
+    height: 34px;
+  }
+
+  .mp-panel-inner {
+    padding: 12px;
+    gap: 14px;
+  }
+
+  .mp-list-row {
+    padding: 12px 10px;
+    min-height: 44px;
+  }
+
+  .mp-row-text {
+    max-width: 220px;
+    font-size: 14px;
+  }
+
+  .mp-stat-block {
+    padding: 12px 10px;
+  }
+
+  .mp-stat-block h3 {
+    font-size: 17px;
+  }
+
+  .mp-range-slider {
+    height: 6px;
+  }
+
+  .mp-range-slider::-webkit-slider-thumb {
+    width: 20px;
+    height: 20px;
+  }
+
+  .mp-panel-headline {
+    font-size: 13px;
+  }
+
+  .mp-panel-headline svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .mp-suggest-item {
+    padding: 10px 12px !important;
+    font-size: 13px !important;
+    min-height: 44px;
+  }
+}

@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { getAllDives, deleteDive, getImageUrl } from "../api/diveApi"
-import { BarChart3, Map, Plus, User, Settings, Award, Wrench, Trash2, Star, MapPin } from "lucide-react"
+import { BarChart3, Map, Plus, User, Settings, Award, Wrench, Trash2, Star, MapPin, TowerControl, Waves } from "lucide-react"
 import { useFavorites } from '../hooks/useFavorites'
 import SkeletonCard from '../components/SkeletonCard'
+import DiveCalendar from '../components/DiveCalendar'
+import BubbleBackground from '../components/BubbleBackground'
+import DiveBadges from '../components/DiveBadges'
 import "./HomePage.css"
 
 export default function HomePage() {
@@ -11,13 +14,13 @@ export default function HomePage() {
   const [dives, setDives] = useState([])
   const [diveImages, setDiveImages] = useState({})
   const [selectedIds, setSelectedIds] = useState([])
-  const [loading, setLoading] = useState(true) // Add loading state
+  const [loading, setLoading] = useState(true)
   
   const { favoriteSites, toggleFavoriteSite } = useFavorites()
 
   useEffect(() => {
     async function load() {
-      setLoading(true) // Start loading
+      setLoading(true) 
       try {
         const res = await getAllDives()
         if (res) {
@@ -35,7 +38,7 @@ export default function HomePage() {
       } catch (err) {
         console.error("Failed loading data dashboard entries:", err)
       } finally {
-        setLoading(false) // End loading
+        setLoading(false) 
       }
     }
     load()
@@ -73,7 +76,9 @@ export default function HomePage() {
   }
 
   return (
-    <div className="dive-list-page">
+    <>
+      <BubbleBackground />
+      <div className="dive-list-page">
       <div className="header">
         <h1>Tauche</h1>
 
@@ -84,75 +89,69 @@ export default function HomePage() {
             </button>
           )}
 
-          <button className="btn-dashboard-nav" onClick={() => navigate("/sites")}>
-            <MapPin size={16} />
-            Dive Sites
-          </button>
-
           <button className="btn-primary-action" onClick={() => navigate("/new")}>
-            <Plus size={16} />
+            <Plus size={18} />
             New Log
           </button>
 
+          <button className="btn-dashboard-nav" onClick={() => navigate("/sites")}>
+            <MapPin size={20} />
+            Sites
+          </button>
+
+          <button className="btn-dashboard-nav" onClick={() => navigate("/trips")}>
+            <TowerControl size={20} />
+            Trips
+          </button>
+
           <button className="btn-dashboard-nav" onClick={() => navigate("/analytics")}>
-            <BarChart3 size={16} />
+            <BarChart3 size={20} />
             Analytics
           </button>
 
           <button className="btn-dashboard-nav" onClick={() => navigate("/map")}>
-            <Map size={16} />
-            Globe View
+            <Map size={20} />
+            Globe
           </button>
 
           <button className="btn-dashboard-nav" onClick={() => navigate("/equipment")}>
-            <Wrench size={16} />
-            Equipment
+            <Wrench size={20} />
+            Gear
           </button>
 
           <button className="btn-dashboard-nav" onClick={() => navigate("/certification")}>
-            <Award size={16} />
-            Certificates
+            <Award size={20} />
+            Certs
           </button>
 
           <button className="btn-dashboard-nav" onClick={() => navigate("/settings")} title="Settings">
-            <Settings size={16} />
+            <Settings size={20} />
           </button>
 
-          <button className="btn-dashboard-nav profile-btn" onClick={() => navigate("/profile")} title="View Profile">
-            <User size={16} />
+          <button className="btn-dashboard-nav" onClick={() => navigate("/profile")} title="View Profile">
+            <User size={20} />
           </button>
         </div>
       </div>
 
       {favoriteSites.length > 0 && (
-        <div className="favorites-filter-bar" style={{ 
-          marginBottom: '24px', 
-          padding: '12px 16px',
-          background: 'rgba(17, 24, 39, 0.6)',
-          borderRadius: '12px',
-          border: '1px solid rgba(251, 191, 36, 0.2)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          flexWrap: 'wrap'
-        }}>
-          <Star size={16} fill="#fbbf24" color="#fbbf24" />
-          <span style={{ fontSize: '13px', fontWeight: '600', color: '#fbbf24' }}>Favorite Sites:</span>
+        <div className="favorites-filter-bar">
+          <span className="favorites-filter-bar-label">
+            <Star size={16} fill="#fbbf24" color="#fbbf24" />
+            Favorite Sites:
+          </span>
           {favoriteSites.map(site => (
-            <span
-              key={site}
-              style={{
-                background: 'rgba(56, 189, 248, 0.1)',
-                padding: '4px 12px',
-                borderRadius: '20px',
-                fontSize: '12px',
-                color: '#94a3b8'
-              }}
-            >
+            <span key={site} className="favorites-filter-bar-site">
               {site.split(',')[0]}
             </span>
           ))}
         </div>
+      )}
+
+      <DiveCalendar dives={dives} />
+
+      {!loading && dives.length > 0 && (
+        <DiveBadges dives={dives} favoriteSites={favoriteSites} />
       )}
 
       {loading ? (
@@ -161,7 +160,10 @@ export default function HomePage() {
         </div>
       ) : dives.length === 0 ? (
         <div className="empty-state">
-          <p>No dives recorded yet. Click 'New Log' to add your first underwater trip.</p>
+          <div className="empty-state-icon">
+            <Waves size={48} strokeWidth={1.5} />
+          </div>
+          <p>No dives recorded yet. Click <strong>New Log</strong> to add your first underwater adventure.</p>
         </div>
       ) : (
         <div className="dive-grid">
@@ -236,5 +238,6 @@ export default function HomePage() {
         </div>
       )}
     </div>
+    </>
   )
 }

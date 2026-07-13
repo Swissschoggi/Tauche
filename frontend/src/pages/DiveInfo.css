@@ -4,10 +4,9 @@
 
 .dive-detail-page {
   position: relative;
-  max-width: 1100px;
+  max-width: var(--page-max-width);
   margin: 0 auto;
-  /* Extra top padding keeps elements clear of absolute layout buttons */
-  padding: 100px 30px 40px 30px; 
+  padding: var(--page-padding);
   color: var(--text);
   font-family: 'Inter', system-ui, sans-serif;
 }
@@ -61,16 +60,14 @@
 }
 
 .info-card {
-  background: rgba(17, 24, 39, 0.6);
+  background: var(--card-bg);
   padding: 24px;
-  border-radius: 18px;
-  border: 1px solid rgba(144, 224, 239, 0.08);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  border-radius: var(--card-radius);
+  border: var(--card-border);
   display: flex;
   flex-direction: column;
   gap: 4px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--card-shadow);
 }
 
 .info-card h3 {
@@ -131,7 +128,10 @@
 /* FORM INPUT FIELDS */
 .info-row-input {
   flex-grow: 1;
-  max-width: 180px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: #ffffff;
@@ -150,6 +150,8 @@
 /* Select dropdown for equipment */
 .info-card select[multiple] {
   width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   min-height: 120px;
   background: rgba(5, 10, 20, 0.4);
   border: 1px solid rgba(144, 224, 239, 0.15);
@@ -172,10 +174,12 @@
 /* Textarea for notes */
 .info-card textarea.info-row-input {
   max-width: 100%;
+  width: 100%;
   min-height: 100px;
   text-align: left;
   resize: vertical;
   font-family: inherit;
+  box-sizing: border-box;
 }
 
 /* Notes content view */
@@ -193,10 +197,10 @@
   top: 12px;
   right: 12px;
   z-index: 10;
-  background: rgba(17, 24, 39, 0.85);
+  background: var(--card-bg);
   color: #38bdf8;
   padding: 8px 12px;
-  border-radius: 10px;
+  border-radius: var(--btn-radius);
   border: 1px solid rgba(255, 255, 255, 0.1);
   cursor: pointer;
   font-size: 13px;

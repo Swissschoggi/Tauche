@@ -2,12 +2,14 @@ import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { getAllDives } from "../api/diveApi"
 import { calculateSAC } from "../components/DiveCalculations"
+
 import { TrendingUp, Activity, Settings, Droplets, Trophy, Clock, ShieldAlert, Thermometer, Compass, Flame, Snowflake, Cloud, Plane } from "lucide-react"
 import "./AnalyticsPage.css"
 
 export default function AnalyticsPage() {
   const navigate = useNavigate()
   const [dives, setDives] = useState([])
+  const [loading, setLoading] = useState(true)
   const [hoveredNode, setHoveredNode] = useState(null)
 
   const localMetricSetting = localStorage.getItem("useMetric")
@@ -15,6 +17,7 @@ export default function AnalyticsPage() {
 
   useEffect(() => {
     async function loadHistory() {
+      setLoading(true)
       try {
         const res = await getAllDives()
         const sorted = [...(Array.isArray(res) ? res : [])]
@@ -23,6 +26,8 @@ export default function AnalyticsPage() {
         setDives(sorted)
       } catch (err) {
         console.error("Failed to load history:", err)
+      } finally {
+        setLoading(false)
       }
     }
     loadHistory()
@@ -127,6 +132,29 @@ const minTemp = validTemps.length ? Math.min(...validTemps) : null;
     if (celsius === null || isNaN(celsius)) return "N/A"
     return isMetric ? `${celsius}°C` : `${Math.round((celsius * 9/5) + 32)}°F`
   }
+
+  if (loading) return (
+    <div className="analytics-page">
+      <button className="back-dashboard-global-btn" onClick={() => navigate("/")}>← Back to Dashboard</button>
+      <button className="nav-settings-global-btn" onClick={() => navigate("/settings")}><Settings size={16} /> Settings</button>
+      <div className="analytics-loading">
+        <div className="analytics-spinner" />
+        <p>Loading telemetry data...</p>
+      </div>
+    </div>
+  )
+
+  if (dives.length === 0) return (
+    <div className="analytics-page">
+      <button className="back-dashboard-global-btn" onClick={() => navigate("/")}>← Back to Dashboard</button>
+      <button className="nav-settings-global-btn" onClick={() => navigate("/settings")}><Settings size={16} /> Settings</button>
+      <div className="analytics-empty">
+        <TrendingUp size={36} strokeWidth={1} style={{ color: '#475569' }} />
+        <p>No dive data to analyze yet</p>
+        <p style={{ fontSize: 12, color: '#64748b' }}>Log your first dive to see stats and trends</p>
+      </div>
+    </div>
+  )
 
   return (
     <div className="analytics-page">

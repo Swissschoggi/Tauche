@@ -11,4 +11,6 @@ import com.tauche.tauche.model.GalleryImage;
 public interface GalleryImageRepository extends JpaRepository<GalleryImage, Long> {
     List<GalleryImage> findByDiveLogIdOrderByCreatedAtAsc(Long diveLogId);
     void deleteByDiveLogId(Long diveLogId);
+
+    long count();
 }

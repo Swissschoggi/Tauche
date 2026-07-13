@@ -46,3 +46,6 @@ uploads/
 .env
 /frontend/.env
 pom.xml
+
+# Orphaned artifact files
+T=*

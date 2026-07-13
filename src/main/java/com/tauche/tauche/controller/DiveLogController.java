@@ -12,13 +12,13 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.WebDataBinder;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.InitBinder;
@@ -51,7 +51,6 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequestMapping("/api/dives")
 @RequiredArgsConstructor
-@CrossOrigin(originPatterns = "*", allowCredentials = "true", allowedHeaders = "*")
 public class DiveLogController {
 
     private final DiveLogService service;
@@ -113,7 +112,7 @@ public class DiveLogController {
 
     @PostMapping
     @Transactional
-    public ResponseEntity<DiveLogDTO> create(@RequestBody DiveLogDTO diveLogDTO, Authentication authentication) {
+    public ResponseEntity<DiveLogDTO> create(@Valid @RequestBody DiveLogDTO diveLogDTO, Authentication authentication) {
         if (authentication == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 
         String userEmail = authentication.getName();
@@ -140,7 +139,7 @@ public class DiveLogController {
     @Transactional
     public ResponseEntity<DiveLogDTO> update(
             @PathVariable Long id,
-            @RequestBody DiveLogDTO diveLogDTO,
+            @Valid @RequestBody DiveLogDTO diveLogDTO,
             Authentication authentication
     ) {
         if (authentication == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
@@ -284,11 +283,11 @@ public class DiveLogController {
             }
             
             String shareToken = dive.getShareToken();
-            if (shareToken == null || shareToken.isEmpty() || shareToken.length() > 8) {
-                shareToken = UUID.randomUUID().toString().substring(0, 8);
+            if (shareToken == null || shareToken.isEmpty()) {
+                shareToken = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
                 dive.setShareToken(shareToken);
                 service.update(id, dive);
-                log.info("Created new 8-character share token {} for dive {}", shareToken, id);
+                log.info("Created new 16-character share token {} for dive {}", shareToken, id);
             }
             
             String envBaseUrl = System.getenv("BASE_URL");

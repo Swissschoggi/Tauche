@@ -1,12 +1,13 @@
-import { useEffect, useRef, useState, useCallback } from "react"
+import { useEffect, useRef, useState, useCallback, useMemo } from "react"
 import Globe from "react-globe.gl"
-import { getAllDives } from "../api/diveApi"
+import { getAllDives, getNearbyDiveShops, suggestLocations } from "../api/diveApi"
 import { useNavigate } from "react-router-dom"
 import { calculateSAC } from "../components/DiveCalculations"
 import {
   Search, SlidersHorizontal, BarChart3, ArrowLeft,
   Compass, Target, X, ChevronRight, Wind, Anchor,
-  Users, Calendar, Gauge, MapPin, TrendingDown
+  Users, Calendar, Gauge, MapPin, TrendingDown,
+  Store, Phone, ExternalLink
 } from "lucide-react"
 import "./MapPage.css"
 
@@ -59,7 +60,20 @@ export default function MapPage() {
   const [selectedPoint, setSelectedPoint] = useState(null)
   const [hoveredId,     setHoveredId]     = useState(null)
 
+  const [shops,         setShops]         = useState([])
+  const [shopsLoading,  setShopsLoading]  = useState(false)
+  const [selectedShop,  setSelectedShop]  = useState(null)
+  const [shopRadius,    setShopRadius]    = useState(5000)
+  const [shopError,     setShopError]     = useState("")
+  const [shopLocation,  setShopLocation]  = useState("")
+  const [searchedAt,    setSearchedAt]    = useState(null)
+  const [suggestions,   setSuggestions]   = useState([])
+  const [showSuggest,   setShowSuggest]   = useState(false)
+  const suggestTimer = useRef(null)
+
   const satelliteBase = "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
+  const globeImageUrl = "https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-dark.jpg"
+  const backgroundImageUrl = "https://cdn.jsdelivr.net/npm/three-globe/example/img/night-sky.png"
 
   const telemetryLegend = [
     { hex: "#38bdf8", range: "0-10m", label: "Shallow" },
@@ -71,13 +85,18 @@ export default function MapPage() {
   /* Dynamically size globe wrapper to fit layout container context grid */
   useEffect(() => {
     if (!mapContainerRef.current) return
+    const el = mapContainerRef.current
+    const rect = el.getBoundingClientRect()
+    if (rect.width > 0 && rect.height > 0) {
+      setDimensions({ width: rect.width, height: rect.height })
+    }
     const resizeObserver = new ResizeObserver((entries) => {
       for (let entry of entries) {
         const { width, height } = entry.contentRect
         setDimensions({ width, height })
       }
     })
-    resizeObserver.observe(mapContainerRef.current)
+    resizeObserver.observe(el)
     return () => resizeObserver.disconnect()
   }, [loading])
 
@@ -164,8 +183,8 @@ export default function MapPage() {
     return () => document.removeEventListener("keydown", handler, true)
   }, [])
 
-  const zoomTo = useCallback((p) => {
-    globeRef.current?.pointOfView({ lat: p.lat, lng: p.lng, altitude: 0.7 }, 800)
+  const zoomTo = useCallback((p, altitude = 0.7) => {
+    globeRef.current?.pointOfView({ lat: p.lat, lng: p.lng, altitude }, 800)
   }, [])
 
   const resetView = useCallback(() => {
@@ -191,6 +210,30 @@ export default function MapPage() {
   const bestSac = points.some(p=>p.avgSac)
     ? points.filter(p=>p.avgSac).reduce((m,p) => parseFloat(p.avgSac)<parseFloat(m.avgSac)?p:m, points.find(p=>p.avgSac))
     : null
+
+  async function fetchNearbyShops(params) {
+    setShopsLoading(true)
+    setShopError("")
+    setSelectedShop(null)
+    try {
+      const data = await getNearbyDiveShops({ ...params, radius: shopRadius })
+      setShops(data.shops || [])
+      setSearchedAt(data.searchedAt || null)
+      if (!data.shops?.length) setShopError("No dive shops found nearby")
+    } catch (err) {
+      console.error("Failed to fetch dive shops:", err)
+      setShopError("Could not load dive shops. Try again later.")
+      setShops([])
+    } finally {
+      setShopsLoading(false)
+    }
+  }
+
+  const allMarkers = useMemo(() => {
+    const dives = filteredPoints.map(p => ({ ...p, _type: "dive" }))
+    const shopM = shops.map(s => ({ ...s, _type: "shop", markerId: `shop-${s.lat}-${s.lng}` }))
+    return [...dives, ...shopM]
+  }, [filteredPoints, shops])
 
   if (loading) return (
     <div className="mp-dashboard-container">
@@ -231,6 +274,10 @@ export default function MapPage() {
             <BarChart3 size={14} />
             <span>Analytics</span>
           </button>
+          <button className={`mp-action-tab ${activePanel === "shops" ? "active" : ""}`} onClick={() => togglePanel("shops")}>
+            <Store size={14} />
+            <span>Shops</span>
+          </button>
           <div className="mp-header-divider" />
           <button className="mp-utility-btn" onClick={resetView} title="Reset Camera View">
             <Compass size={15} />
@@ -244,22 +291,34 @@ export default function MapPage() {
           ref={globeRef}
           width={dimensions.width}
           height={dimensions.height}
-          globeImageUrl="//cdn.jsdelivr.net/npm/three-globe/example/img/earth-dark.jpg"
-          backgroundImageUrl="//cdn.jsdelivr.net/npm/three-globe/example/img/night-sky.png"
+          globeImageUrl={globeImageUrl}
+          backgroundImageUrl={backgroundImageUrl}
           globeTileEngineUrl={(x,y,z) => satelliteBase.replace("{x}",x).replace("{y}",y).replace("{z}",z)}
           backgroundColor="#0f172a"
           waitForGlobeReady={true}
 
-          htmlElementsData={filteredPoints}
+          htmlElementsData={allMarkers}
           htmlLat="lat"
           htmlLng="lng"
           htmlElement={(p) => {
-            const col = depthToColor(p.maxDepthAtLocation)
             const el = document.createElement("div")
             const isForced = hoveredId === p.id
+
+            if (p._type === "shop") {
+              el.className = `mp-marker ${isForced ? "mp-marker--open" : ""}`
+              el.style.cursor = "pointer"
+              el.style.pointerEvents = "auto"
+              el.innerHTML = `<div style="width:8px;height:8px;border-radius:50%;background:#facc15;box-shadow:0 0 6px #facc1588"></div>`
+              el.addEventListener("click", (e) => {
+                e.stopPropagation()
+                zoomTo(p, 0.05)
+                setSelectedShop(p)
+              })
+              return el
+            }
+
+            const col = depthToColor(p.maxDepthAtLocation)
             el.className = `mp-marker ${isForced ? "mp-marker--open" : ""}`
-            
-            // Explicit style configurations to make markers clickable inside Three.js container overlays
             el.style.cursor = "pointer"
             el.style.pointerEvents = "auto"
 
@@ -272,7 +331,6 @@ export default function MapPage() {
               </div>
             `
             
-            // Click Handler definition to center on coordinates and trigger layout popover
             el.addEventListener("click", (e) => {
               e.stopPropagation()
               zoomTo(p)
@@ -282,7 +340,7 @@ export default function MapPage() {
             return el
           }}
 
-          ringsData={filteredPoints}
+          ringsData={allMarkers.filter(m => m._type === "dive")}
           ringLat="lat"
           ringLng="lng"
           ringColor={(p) => [depthToColor(p.maxDepthAtLocation).hex, "rgba(0,0,0,0)"]}
@@ -397,6 +455,132 @@ export default function MapPage() {
                 </div>
               </>
             )}
+
+            {activePanel === "shops" && (
+              <>
+                <div className="mp-panel-header">
+                  <div className="mp-panel-headline"><Store size={14} className="yellow" /><span>Nearby Dive Shops</span></div>
+                  <button className="mp-close-overlay" onClick={() => setActivePanel(null)}><X size={14} /></button>
+                </div>
+                <div className="mp-panel-inner">
+                  <div className="mp-search-box-wrap" style={{position:"relative"}}>
+                    <MapPin size={13} className="mp-search-embedded-icon" />
+                    <input
+                      className="mp-search-field"
+                      type="text"
+                      placeholder="City, region, or dive site..."
+                      value={shopLocation}
+                      onChange={e => {
+                        setShopLocation(e.target.value)
+                        const val = e.target.value.trim()
+                        if (suggestTimer.current) clearTimeout(suggestTimer.current)
+                        if (val.length < 2) { setSuggestions([]); setShowSuggest(false); return }
+                        suggestTimer.current = setTimeout(async () => {
+                          try {
+                            const data = await suggestLocations(val)
+                            setSuggestions(data.suggestions || [])
+                            setShowSuggest(data.suggestions?.length > 0)
+                          } catch { setSuggestions([]) }
+                        }, 250)
+                      }}
+                      onFocus={() => { if (suggestions.length) setShowSuggest(true) }}
+                      onBlur={() => setTimeout(() => setShowSuggest(false), 200)}
+                      onKeyDown={e => {
+                        if (e.key === "Enter" && shopLocation.trim()) {
+                          setShowSuggest(false)
+                          fetchNearbyShops({ location: shopLocation.trim() })
+                        }
+                      }}
+                    />
+                    {showSuggest && suggestions.length > 0 && (
+                      <div style={{position:"absolute",top:"100%",left:0,right:0,background:"#1e293b",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,zIndex:10,maxHeight:180,overflowY:"auto"}}>
+                        {suggestions.map((s, i) => (
+                          <button key={i} className="mp-suggest-item" style={{display:"block",width:"100%",textAlign:"left",padding:"6px 10px",fontSize:11,color:"#e2e8f0",background:"transparent",border:"none",borderBottom:i < suggestions.length-1 ? "1px solid rgba(255,255,255,0.05)" : "none",cursor:"pointer"}}
+                            onMouseDown={() => {
+                              setShopLocation(s.label.split(",")[0])
+                              setShowSuggest(false)
+                              fetchNearbyShops({ lat: s.lat, lng: s.lng })
+                            }}>
+                            <MapPin size={10} style={{color:"#facc15",marginRight:6,flexShrink:0}} />{s.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div style={{display:"flex",gap:6,marginTop:6}}>
+                    <button className="mp-cta-fly" style={{flex:1,fontSize:11}} onClick={() => {
+                      if (shopLocation.trim()) {
+                        setShowSuggest(false)
+                        fetchNearbyShops({ location: shopLocation.trim() })
+                      }
+                    }} disabled={shopsLoading || !shopLocation.trim()}>
+                      <Search size={12} /><span>Search</span>
+                    </button>
+                  </div>
+
+                  <div style={{height:8}} />
+
+                  {searchedAt && shops.length > 0 && (
+                    <p style={{fontSize:10,color:"var(--muted)",margin:0}}>
+                      Shops near {searchedAt.lat.toFixed(4)}, {searchedAt.lng.toFixed(4)}
+                    </p>
+                  )}
+
+                  <div className="mp-range-group">
+                    <div className="mp-range-title"><span>Search Radius</span><b className="yellow">{shopRadius >= 1000 ? `${shopRadius/1000}km` : `${shopRadius}m`}</b></div>
+                    <input type="range" className="mp-range-slider" min="1000" max="50000" step="1000" value={shopRadius}
+                      onChange={e => setShopRadius(+e.target.value)} />
+                  </div>
+
+                  <p className="mp-legend-title" style={{fontSize:11,margin:"6px 0 4px"}}>Dive Sites</p>
+                  <div style={{maxHeight:140,overflowY:"auto"}}>
+                    {points.slice(0, 10).map(p => (
+                      <button key={p.id} className="mp-list-row" style={{padding:"4px 8px"}}
+                        onClick={() => { setShopLocation(p.location?.split(",")[0] || p.name); fetchNearbyShops({ lat: p.lat, lng: p.lng }) }}
+                      >
+                        <span className="mp-row-indicator" style={{background:"#38bdf8",flexShrink:0,width:6,height:6}} />
+                        <span className="mp-row-text" style={{fontSize:11}}>{p.location?.split(",")[0] || p.name}</span>
+                        <span style={{fontSize:9,color:"var(--muted)"}}>{p.maxDepthAtLocation}m</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {shopError && <p className="mp-empty-text" style={{marginTop:8}}>{shopError}</p>}
+
+                  {shopsLoading && (
+                    <div className="mp-stats-mosaic" style={{gridTemplateColumns:"1fr",marginTop:8}}>
+                      {[1,2,3].map(i => (
+                        <div key={i} className="mp-stat-block" style={{opacity:0.5 - i*0.15}}>
+                          <div style={{height:12,width:"60%",background:"rgba(255,255,255,0.1)",borderRadius:4}} />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {!shopsLoading && shops.length > 0 && (
+                    <div className="mp-list-group" style={{marginTop:8}}>
+                      {shops.map(s => {
+                        const key = `shop-${s.lat}-${s.lng}`
+                        return (
+                          <button key={key} className="mp-list-row"
+                            onClick={() => { zoomTo(s, 0.05); setSelectedShop(s) }}
+                          >
+                            <span className="mp-row-indicator" style={{background:"#facc15",flexShrink:0}}>
+                              <Store size={10} />
+                            </span>
+                            <div style={{flex:1,minWidth:0}}>
+                              <span className="mp-row-text" style={{display:"block",fontSize:12}}>{s.name}</span>
+                              {s.address && <span style={{fontSize:10,color:"var(--muted)",display:"block",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.address}</span>}
+                            </div>
+                            <ChevronRight size={12} style={{flexShrink:0}} />
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         )}
 
@@ -432,6 +616,55 @@ export default function MapPage() {
             </div>
           )
         })()}
+
+        {/* ── Dive Shop Detail Popover ── */}
+        {selectedShop && (
+          <div className="mp-popover-card">
+            <div className="mp-popover-stripe" style={{ background: "#facc15" }} />
+            <button className="mp-popover-close" onClick={() => setSelectedShop(null)}><X size={14} /></button>
+
+            <div className="mp-popover-body">
+              <div className="mp-popover-main">
+                <div style={{width:52,height:52,borderRadius:"50%",background:"rgba(250,204,21,0.15)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                  <Store size={22} style={{color:"#facc15"}} />
+                </div>
+                <div className="mp-popover-header">
+                  <h4>{selectedShop.name}</h4>
+                  {selectedShop.address && <p>{selectedShop.address}</p>}
+                </div>
+              </div>
+
+              <div className="mp-popover-meta-list">
+                {selectedShop.phone && (
+                  <a href={`tel:${selectedShop.phone}`} className="mp-popover-meta-row" style={{textDecoration:"none",color:"inherit"}}>
+                    <Phone size={12} /><span>{selectedShop.phone}</span>
+                  </a>
+                )}
+                {(selectedShop.hasNitrox || selectedShop.hasOxygen || selectedShop.hasRental || selectedShop.hasCourses) && (
+                  <div className="mp-popover-meta-row" style={{flexWrap:"wrap",gap:4}}>
+                    {selectedShop.hasNitrox && <span style={{fontSize:10,padding:"2px 6px",borderRadius:4,background:"rgba(34,197,94,0.2)",color:"#22c55e"}}>Nitrox</span>}
+                    {selectedShop.hasOxygen && <span style={{fontSize:10,padding:"2px 6px",borderRadius:4,background:"rgba(59,130,246,0.2)",color:"#3b82f6"}}>Oxygen</span>}
+                    {selectedShop.hasRental && <span style={{fontSize:10,padding:"2px 6px",borderRadius:4,background:"rgba(234,179,8,0.2)",color:"#eab308"}}>Rental</span>}
+                    {selectedShop.hasCourses && <span style={{fontSize:10,padding:"2px 6px",borderRadius:4,background:"rgba(168,85,247,0.2)",color:"#a855f7"}}>Courses</span>}
+                  </div>
+                )}
+                {selectedShop.openingHours && (
+                  <div className="mp-popover-meta-row">
+                    <Calendar size={12} /><span>{selectedShop.openingHours}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {selectedShop.website && (
+              <a href={selectedShop.website.startsWith("http") ? selectedShop.website : `https://${selectedShop.website}`}
+                 target="_blank" rel="noopener noreferrer" className="mp-popover-action" style={{textDecoration:"none"}}>
+                <span>Visit Website</span>
+                <ExternalLink size={14} />
+              </a>
+            )}
+          </div>
+        )}
       </main>
     </div>
   )

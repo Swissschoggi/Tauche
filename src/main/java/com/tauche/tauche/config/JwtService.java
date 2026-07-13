@@ -19,7 +19,7 @@ public class JwtService {
     @Value("${JWT_SECRET}")
     private String secretHex;
 
-    private SecretKey getSigningKey() {
+    public SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(hexToBytes(secretHex));
     }
 

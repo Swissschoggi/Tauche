@@ -62,6 +62,12 @@ public class AuthController {
         if (request.getEmail() == null || request.getPassword() == null || request.getPassword().isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("message", "Missing required fields"));
         }
+        if (request.getPassword().length() < 8) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Password must be at least 8 characters"));
+        }
+        if (!request.getPassword().matches(".*[A-Z].*") || !request.getPassword().matches(".*[a-z].*") || !request.getPassword().matches(".*\\d.*")) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Password must contain uppercase, lowercase, and a digit"));
+        }
         if (diverRepository.findByEmail(request.getEmail()).isPresent()) {
             return ResponseEntity.badRequest().body(Map.of("message", "Registration failed"));
         }

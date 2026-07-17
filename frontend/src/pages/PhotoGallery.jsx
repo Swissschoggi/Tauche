@@ -11,7 +11,11 @@ const COMMON_SPECIES = [
   'Moray Eel', 'Green Moray', 'Spotted Moray',
   'Clownfish', 'Angelfish', 'Parrotfish', 'Butterflyfish', 'Lionfish', 'Pufferfish',
   'Octopus', 'Cuttlefish', 'Squid', 'Seahorse', 'Pipefish',
-  'Nudibranch', 'Crab', 'Lobster', 'Shrimp', 'Sea Star', 'Urchin'
+  'Nudibranch', 'Crab', 'Lobster', 'Shrimp', 'Sea Star', 'Urchin',
+  'Barracuda', 'Grouper', 'Snapper', 'Trevally', 'Triggerfish', 'Wrasse',
+  'Surgeonfish', 'Batfish', 'Frogfish', 'Scorpionfish', 'Stonefish', 'Damselfish',
+  'Dolphin', 'Whale Shark', 'Mola Mola', 'Jellyfish', 'Sea Cucumber',
+  'Anemone', 'Flounder', 'Goatfish', 'Blenny', 'Goby', 'Conch'
 ]
 
 export default function PhotoGallery({ diveId }) {

@@ -1,0 +1,255 @@
+.sightings-page {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  padding-top: 80px;
+}
+
+.sightings-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.sightings-header h1 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 24px;
+  margin: 0;
+}
+
+.btn-back {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 6px;
+  border-radius: 8px;
+  color: var(--text-primary, #fff);
+}
+
+.btn-back:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+.sightings-loading {
+  text-align: center;
+  padding: 48px;
+  color: var(--text-secondary, #94a3b8);
+}
+
+.sightings-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  background: rgba(239,68,68,0.1);
+  border: 1px solid rgba(239,68,68,0.3);
+  border-radius: 10px;
+  color: #ef4444;
+  margin-bottom: 16px;
+}
+
+.sightings-empty {
+  text-align: center;
+  padding: 64px 24px;
+  color: var(--text-secondary, #94a3b8);
+}
+
+.sightings-empty svg {
+  opacity: 0.4;
+  margin-bottom: 16px;
+}
+
+.sightings-empty h2 {
+  margin: 0 0 8px;
+  font-size: 20px;
+}
+
+.sightings-empty p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.sightings-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 20px 12px;
+  background: var(--card-bg, rgba(255,255,255,0.06));
+  border: 1px solid var(--card-border, rgba(255,255,255,0.1));
+  border-radius: 12px;
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent, #06b6d4);
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--text-secondary, #94a3b8);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.sightings-controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.sightings-search {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--card-bg, rgba(255,255,255,0.06));
+  border: 1px solid var(--card-border, rgba(255,255,255,0.1));
+  border-radius: 8px;
+  color: var(--text-secondary, #94a3b8);
+}
+
+.sightings-search input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text-primary, #fff);
+  font-size: 14px;
+}
+
+.sightings-sort-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--card-bg, rgba(255,255,255,0.06));
+  border: 1px solid var(--card-border, rgba(255,255,255,0.1));
+  border-radius: 8px;
+  color: var(--text-secondary, #94a3b8);
+  cursor: pointer;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.sightings-sort-btn:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+.sightings-list {
+  display: grid;
+  gap: 8px;
+}
+
+.sighting-card {
+  background: var(--card-bg, rgba(255,255,255,0.06));
+  border: 1px solid var(--card-border, rgba(255,255,255,0.1));
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.sighting-card.expanded {
+  border-color: var(--accent, #06b6d4);
+}
+
+.sighting-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+
+.sighting-main:hover {
+  background: rgba(255,255,255,0.03);
+}
+
+.sighting-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.sighting-thumb-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.06);
+  color: var(--text-secondary, #94a3b8);
+}
+
+.sighting-info {
+  flex: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.sighting-species {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.sighting-count {
+  font-size: 12px;
+  color: var(--accent, #06b6d4);
+  font-weight: 500;
+}
+
+.sighting-dives,
+.sighting-last {
+  font-size: 11px;
+  color: var(--text-secondary, #94a3b8);
+}
+
+.sighting-expand-icon {
+  color: var(--text-secondary, #94a3b8);
+  flex-shrink: 0;
+}
+
+.sighting-photos-strip {
+  display: flex;
+  gap: 6px;
+  padding: 0 14px 12px;
+  overflow-x: auto;
+}
+
+.sighting-photo-thumb {
+  width: 80px;
+  height: 60px;
+  border-radius: 6px;
+  object-fit: cover;
+  cursor: pointer;
+  flex-shrink: 0;
+  border: 1px solid var(--card-border, rgba(255,255,255,0.1));
+}
+
+.sighting-photo-thumb:hover {
+  opacity: 0.8;
+}
+
+.sightings-no-results {
+  text-align: center;
+  padding: 32px;
+  color: var(--text-secondary, #94a3b8);
+  font-size: 14px;
+}

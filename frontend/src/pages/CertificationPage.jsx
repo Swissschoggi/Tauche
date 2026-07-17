@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react"
 import { useNavigate } from "react-router-dom"
-import { getAllDives, getDiverProfile } from "../api/diveApi"
-import { Award, Plus, Trash2, ShieldCheck, Printer, Calendar, ShieldAlert } from "lucide-react"
+import { getAllDives, getDiverProfile, getCertifications, createCertification, deleteCertification } from "../api/diveApi"
+import { Award, Plus, Trash2, ShieldCheck, Printer, Calendar, ShieldAlert, Loader2 } from "lucide-react"
 import "./CertificationPage.css"
 
 export default function CertificationPage() {
@@ -11,39 +11,38 @@ export default function CertificationPage() {
   const [dives, setDives] = useState([])
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
-  
-  const [earnedCerts, setEarnedCerts] = useState(() => {
-    const saved = localStorage.getItem("diver_certifications")
-    return saved ? JSON.parse(saved) : [
-      { id: "1", agency: "PADI", title: "Open Water Diver", date: "2022-06-15", certNumber: "OW-98421-CH" }
-    ]
-  })
+  const [earnedCerts, setEarnedCerts] = useState([])
+  const [apiLoading, setApiLoading] = useState(true)
+  const [apiError, setApiError] = useState('')
 
   const [showAddModal, setShowAddModal] = useState(false)
   const [newCert, setNewCert] = useState({ agency: "PADI", title: "", date: "", certNumber: "" })
+  const [saving, setSaving] = useState(false)
 
   const isMetric = JSON.parse(localStorage.getItem("useMetric") ?? "true")
 
   useEffect(() => {
     async function load() {
       try {
-        const [divesRes, profileRes] = await Promise.all([getAllDives(), getDiverProfile()])
+        const [divesRes, profileRes, certsRes] = await Promise.all([
+          getAllDives(),
+          getDiverProfile(),
+          getCertifications()
+        ])
         const sorted = (Array.isArray(divesRes) ? divesRes : [])
           .sort((a, b) => new Date(a.date) - new Date(b.date))
         setDives(sorted)
         setProfile(profileRes)
+        setEarnedCerts(Array.isArray(certsRes) ? certsRes : [])
       } catch (err) {
         console.error("Failed to load certification data:", err)
       } finally {
         setLoading(false)
+        setApiLoading(false)
       }
     }
     load()
   }, [])
-
-  useEffect(() => {
-    localStorage.setItem("diver_certifications", JSON.stringify(earnedCerts))
-  }, [earnedCerts])
 
   function formatDepth(m) {
     if (!m) return "—"
@@ -60,17 +59,35 @@ export default function CertificationPage() {
     return `${mins} min`
   }
 
-  function handleAddCert(e) {
+  async function handleAddCert(e) {
     e.preventDefault()
     if (!newCert.title || !newCert.date) return
-    const created = { ...newCert, id: Date.now().toString() }
-    setEarnedCerts(prev => [created, ...prev])
-    setNewCert({ agency: "PADI", title: "", date: "", certNumber: "" })
-    setShowAddModal(false)
+    setSaving(true)
+    setApiError('')
+    try {
+      const created = await createCertification({
+        certificationName: newCert.title,
+        agency: newCert.agency,
+        dateIssued: newCert.date,
+        certificationNumber: newCert.certNumber || null,
+        isActive: true
+      })
+      setEarnedCerts(prev => [created, ...prev])
+      setNewCert({ agency: "PADI", title: "", date: "", certNumber: "" })
+      setShowAddModal(false)
+    } catch (err) {
+      setApiError('Failed to save certification')
+    }
+    setSaving(false)
   }
 
-  function handleRemoveCert(id) {
-    setEarnedCerts(prev => prev.filter(c => c.id !== id))
+  async function handleRemoveCert(id) {
+    try {
+      await deleteCertification(id)
+      setEarnedCerts(prev => prev.filter(c => c.id !== id))
+    } catch (err) {
+      setApiError('Failed to delete certification')
+    }
   }
 
   if (loading) {
@@ -126,6 +143,8 @@ export default function CertificationPage() {
         <div className="wallet-cards-main-view">
           <h3>Verified Training Credentials</h3>
           
+          {apiError && <div className="cert-error">{apiError}</div>}
+          
           {earnedCerts.length === 0 ? (
             <div className="empty-wallet-container">
               <Award size={32} />
@@ -145,15 +164,15 @@ export default function CertificationPage() {
                     </button>
                   </div>
                   <div className="c-card-middle">
-                    <h4>{c.title}</h4>
+                    <h4>{c.certificationName || c.title}</h4>
                   </div>
                   <div className="c-card-bottom">
                     <div className="meta-field">
-                      <Calendar size={12} /> {c.date}
+                      <Calendar size={12} /> {c.dateIssued || c.date}
                     </div>
-                    {c.certNumber && (
+                    {(c.certificationNumber || c.certNumber) && (
                       <div className="ID-field">
-                        <span># {c.certNumber}</span>
+                        <span># {c.certificationNumber || c.certNumber}</span>
                       </div>
                     )}
                   </div>
@@ -267,7 +286,9 @@ export default function CertificationPage() {
               </div>
               <div className="modal-buttons">
                 <button type="button" className="modal-cancel-btn" onClick={() => setShowAddModal(false)}>Cancel</button>
-                <button type="submit" className="modal-submit-btn">Save Certificate</button>
+                <button type="submit" className="modal-submit-btn" disabled={saving}>
+                  {saving ? 'Saving...' : 'Save Certificate'}
+                </button>
               </div>
             </form>
           </div>

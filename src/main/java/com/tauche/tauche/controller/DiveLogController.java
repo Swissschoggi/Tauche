@@ -469,4 +469,15 @@ public class DiveLogController {
         
         return ResponseEntity.ok().build();
     }
+
+    @GetMapping("/sightings")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> getSightings(Authentication authentication) {
+        if (authentication == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        String userEmail = authentication.getName();
+        Diver diver = diverRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new RuntimeException("Diver not found"));
+        List<Map<String, Object>> sightings = service.getSpeciesSightings(diver.getId());
+        return ResponseEntity.ok(sightings);
+    }
 }

@@ -5,187 +5,183 @@
 [![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white)](https://reactjs.org)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org)
 
-**Tauche** *(Swiss German for “diving”)* is a modern full-stack web application for logging, managing, and analyzing scuba dives.  
-It combines detailed dive logging with interactive telemetry visualization, equipment service tracking, media upload and sharing capabilities.
-As a disclaimer, I partially vibecoded this, due to time constraints and lack of knowledge. I am always happy if people can help me improve both my skills and this app by opening issues :)
+**Tauche** *(Swiss German for "diving")* is a full-stack web app for logging, tracking, and overanalyzing your scuba dives. Because why let a perfectly good piece of paper do the job when you can build a whole web app about it and also selfhost it?
+
+I partially vibecoded this thing due to time constraints and my general lack of patience for reading docs. If something breaks (and it will), feel free to yell at me via issues — I'm always happy to learn what I (or AI lol) did wrong.
+
 > **Live Demo**: [https://tauche.onrender.com](https://tauche.onrender.com)
-> 
-> *Note: The free tier may take up to 30 seconds to wake up on first visit.*
+>
+> *Free tier stuff, so give it a good 30 seconds to wake up before judging the loading speed.*
 
 ---
 
-## Features
+## What It Does
 
--  Dive log management with rich metadata
--  Interactive SVG telemetry profile timeline
--  Map-based dive overview
--  image/media upload
--  Fully containerized deployment
--  Modern React + Spring Boot architecture
+###  Dive Logging
+Every dive gets the full treatment — date, location, depth, duration, water temp, visibility, weather, suit type, gas mix, starting/ending pressure, buddy, dive center, notes, GPS coordinates, and even which equipment you used.
 
+###  Interactive Telemetry Timeline
+An SVG dive profile thingy that shows your depth over time. Fancy curves. Definitely not just a line chart template I found on the internet.
+
+###  Map View & Dive Sites
+All your dives plotted on a map. Powered by OpenStreetMap because Google wanted money.
+
+###  Photo Gallery & Marine Life Sightings
+Upload photos per dive, tag them with marine species (54 species to choose from, or add custom ones for fun). The **Sightings Dashboard** aggregates everything — thumbnails, counts, last seen dates, expandable photo strips, search, and sort. Custom tags won't get counted as species cause if you put your own name you apparently count as a fish.
+
+###  Equipment Closet
+Track your gear, set service intervals, mark things as needing maintenance. Because your BCD deserves better than "eh, probably fine." (speaking from experience)
+
+###  Trip Planning
+Full trip management with:
+- Destinations & dates
+- Daily itinerary with dive site planning
+- Dive buddies (just names now, the fancy account-linking thing is dead)
+- Budget tracking
+- Pre-trip checklist (6 items, gear serviced, travel booked, etc.)
+- Weather forecast integration
+- Gear packing lists per trip per person
+
+Also imports Surmai `.zip` files.
+
+###  Certifications
+Log your certs agency, level, date.
+
+###  Analytics
+Charts. Stats. Numbers.
+
+###  Buddy System
+Search and connect with other registered divers. Add them as buddies. Stalk their profiles.
+
+###  Dive Sharing
+Share a dive. Great for bragging to people who don't care.
+
+###  Admin Dashboard
+If you somehow get admin access, you can manage users. Exciting stuff.
+
+###  Profile & Settings
+The usual edit your name, email, change your profile picture. Settings has some toggles I forgot what they do.
 
 ---
 
-# Local Development
+##  Tech Stack
 
-To run Tauche locally **without Docker**, start the backend and frontend separately.
+| Layer | What |
+|---|---|
+| Backend | Java 21, Spring Boot, JPA/Hibernate |
+| Frontend | React 18, Vite, React Router |
+| Database | PostgreSQL 15 |
+| Auth | JWT + Spring Security |
+| Maps | Leaflet / OpenStreetMap |
+| Images | Local upload storage |
+| Deployment | Docker |
 
 ---
 
-## Prerequisites
+## Local Development
 
-Make sure the following tools are installed:
+Run it without Docker.
 
-- **Java 21+ (JDK)**
+### Prerequisites
+
+- **Java 21+**
 - **Node.js 20+**
 - **npm**
-- A running **PostgreSQL** instance matching your backend configuration
+- A running **PostgreSQL** instance.
 
----
-
-##  Backend Setup
-
-1. Configure your local database properties or environment variables.
-2. Run the Spring Boot wrapper script inside the root directory:
+###  Backend
 
 ```bash
+# start spring boot
 ./mvnw spring-boot:run
 ```
 
-The backend will be available at:
+Port `8080` by default. Images land in `./uploads/`.
 
-```text
-http://localhost:8080
-```
+###  Frontend
 
-### Uploaded Media
-
-User-uploaded images are stored in:
-
-```text
-./uploads/
-```
-
----
-
-## Frontend Setup
-
-Create a `.env` file inside the `frontend/` directory:
+Create `frontend/.env`:
 
 ```env
 VITE_API_BASE_URL=http://localhost:8080
 ```
 
-Then start the frontend development server:
+Then:
 
 ```bash
 cd frontend
-
 npm install
 npm run dev
 ```
 
-The frontend will be available at:
-
-```text
-http://localhost:5173
-```
-
-*(or port 3000 depending on your Vite configuration)*
+Should be on `http://localhost:5173`.
 
 ---
 
-# Docker Deployment
+## Docker Deployment
 
-## Docker Compose Setup
-
-### Download the docker-compose.yml and .env file
 
 ```bash
 wget https://raw.githubusercontent.com/Swissschoggi/tauche/refs/heads/main/docker-compose.yml
 wget https://raw.githubusercontent.com/Swissschoggi/tauche/refs/heads/main/.env.example
 mv .env.example .env
-```
----
-
-### Launch the Stack
-
-Build and start all services:
-
-```bash
 docker-compose up -d
 ```
 
 ---
 
-# Project Structure
+## CORS Config
 
-```text
+Tauche parses allowed origins from an env variable:
+
+```env
+ALLOWED_ORIGINS=http://localhost:5173,http://192.168.1.x:8989
+```
+
+---
+
+##  Things That Probably Need Fixing
+
+- The trips page still uses localStorage because the backend model is missing half the fields
+- The mobile nav is held together with duct tape
+- I'm sure there's more, be sure to let me know
+
+---
+
+## Project Structure
+
+```
 Tauche/
 ├── docker-compose.yml
 ├── Dockerfile
+├── pom.xml
+├── render.yaml
+├── src/main/java/com/tauche/tauche/
+│   ├── config/          # Security, CORS, JWT
+│   ├── controller/      # REST endpoints
+│   ├── dto/             # Response/request objects
+│   ├── model/           # JPA entities
+│   ├── repository/      # Database access
+│   └── service/         # Business logic
 ├── frontend/
 │   ├── index.html
-│   ├── package.json
+│   ├── vite.config.js
 │   ├── src/
 │   │   ├── App.jsx
-│   │   ├── main.jsx
-│   │   ├── components/
-│   │   │   ├── DiveCalculations.jsx
-│   │   │   ├── DiveTrendChart.jsx
-│   │   │   └── ProtectedRoute.jsx
-│   │   ├── pages/
-│   │   │   ├── AnalyticsPage.jsx
-│   │   │   ├── CertificationPage.jsx
-│   │   │   ├── DiveFormPage.jsx
-│   │   │   ├── DiveInfo.jsx
-│   │   │   ├── EquipmentPage.jsx
-│   │   │   ├── GearPackingList.jsx
-│   │   │   ├── HomePage.jsx
-│   │   │   ├── LoginPage.jsx
-│   │   │   ├── MapPage.jsx
-│   │   │   ├── MedicalQuestionnaire.jsx
-│   │   │   ├── PhotoGallery.jsx
-│   │   │   ├── ProfilePage.jsx
-│   │   │   ├── RegisterPage.jsx
-│   │   │   ├── SettingsPage.jsx
-│   │   │   └── SharedDivePage.jsx
-│   │   └── ...
-│   └── vite.config.js
-├── LICENSE
-├── pom.xml
-├── README.md
-├── render.yaml
-└── src/
-    └── main/
-        └── java/
-            └── com/tauche/tauche/
-                ├── config/
-                ├── controller/
-                ├── dto/
-                ├── model/
-                ├── repository/
-                ├── service/
-                └── TaucheApplication.java
+│   │   ├── api/         # API client (axios)
+│   │   ├── components/  # Reusable bits
+│   │   ├── pages/       # Every page is here
+│   │   └── hooks/       # Custom hooks
+│   └── public/
+└── uploads/             # User images land here
 ```
 
 ---
 
-# Important Configuration Notes
+## License
 
-## CORS Configuration
-
-Tauche parses cross-origin restrictions dynamically at startup from your environment configuration. You do not need to change java core code to whitelist new nodes. Simply append your target access URLs directly to the ALLOWED_ORIGINS variable separated by commas inside your active .env context block before firing docker commands:
-
-```env
-ALLOWED_ORIGINS=[http://172.168.1.143:8989](http://172.168.1.143:8989),http://localhost:5173
-```
+MIT, or whatever. Don't do anything illegal with my dive app.
 
 ---
 
-# Future Improvements
-
-- Advanced dive analytics & statistics
-- Live telemetry ingestion
-- Mobile-responsive enhancements
-- Public dive map sharing
+*Built because logging dives on paper is apparently "vintage" and not "tedious."*

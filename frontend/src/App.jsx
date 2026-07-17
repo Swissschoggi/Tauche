@@ -10,11 +10,13 @@ import ProtectedRoute from "./components/ProtectedRoute"
 import ProfilePage from "./pages/ProfilePage"
 import SettingsPage from "./pages/SettingsPage"
 import CertificationPage from "./pages/CertificationPage"
+import SightingsPage from "./pages/SightingsPage"
 import EquipmentPage from "./pages/EquipmentPage"
 import SharedDivePage from "./pages/SharedDivePage"
 import ShareViewPage from "./pages/ShareViewPage"
 import DiveSiteDatabase from "./components/DiveSiteDatabase"
 import TripsPage from "./pages/TripsPage"
+import TripDetailPage from "./pages/TripDetailPage"
 import AdminPage from "./pages/AdminPage"
 
 function App() {
@@ -37,9 +39,11 @@ function App() {
         <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
         <Route path="/certification" element={<ProtectedRoute><CertificationPage /></ProtectedRoute>} />
+        <Route path="/sightings" element={<ProtectedRoute><SightingsPage /></ProtectedRoute>} />
         <Route path="/equipment" element={<ProtectedRoute><EquipmentPage /></ProtectedRoute>} />
         <Route path="/sites" element={<ProtectedRoute><DiveSiteDatabase /></ProtectedRoute>} />
         <Route path="/trips" element={<ProtectedRoute><TripsPage /></ProtectedRoute>} />
+        <Route path="/trips/:id" element={<ProtectedRoute><TripDetailPage /></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

@@ -1304,3 +1304,380 @@
   align-items: center;
   gap: 4px;
 }
+
+/* ── Status Confirm Modal ── */
+.trips-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.trips-modal {
+  background: #1e293b;
+  border: 1px solid rgba(144, 224, 239, 0.15);
+  border-radius: 16px;
+  padding: 28px;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.trips-modal h3 {
+  color: #f8fafc;
+  font-size: 18px;
+  margin: 0 0 4px 0;
+}
+
+.trips-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.trips-checklist-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #cbd5e1;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.trips-checklist-row input[type="checkbox"] {
+  accent-color: #38bdf8;
+  width: 16px;
+  height: 16px;
+}
+
+.trips-modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+/* ── Weather Forecast ── */
+.trips-forecast-card {
+  background: rgba(96, 165, 250, 0.08);
+  border: 1px solid rgba(96, 165, 250, 0.15);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.trips-forecast-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #60a5fa;
+  margin-bottom: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.trips-forecast-refresh {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: #60a5fa;
+  cursor: pointer;
+  padding: 2px;
+  opacity: 0.6;
+}
+
+.trips-forecast-refresh:hover { opacity: 1; }
+
+.trips-forecast-days {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+}
+
+.trips-forecast-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 80px;
+  padding: 8px 6px;
+  background: rgba(15, 23, 42, 0.4);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.trips-forecast-date {
+  font-size: 10px;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+.trips-forecast-icon {
+  font-size: 20px;
+}
+
+.trips-forecast-temp {
+  font-size: 12px;
+  color: #e2e8f0;
+  font-weight: 600;
+}
+
+.trips-forecast-wind {
+  font-size: 10px;
+  color: #64748b;
+}
+
+.trips-forecast-loading {
+  color: #64748b;
+  font-size: 12px;
+  margin: 0 0 8px 0;
+}
+
+/* ── Buddy Search ── */
+.trips-buddy-account-tag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 8px;
+  font-size: 13px;
+  color: #7dd3fc;
+  flex: 1;
+}
+
+.trips-buddy-unlink {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+}
+
+.trips-buddy-unlink:hover { color: #ef4444; }
+
+.trips-buddy-search-popup {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  margin-top: 4px;
+  background: #1e293b;
+  border: 1px solid rgba(144, 224, 239, 0.15);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.trips-buddy-search-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(144, 224, 239, 0.08);
+}
+
+.trips-buddy-search-header input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #f8fafc;
+  font-size: 13px;
+  outline: none;
+}
+
+.trips-buddy-search-header input::placeholder { color: #475569; }
+
+.trips-buddy-search-results {
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.trips-buddy-search-result {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: #cbd5e1;
+  cursor: pointer;
+}
+
+.trips-buddy-search-result:hover { background: rgba(56, 189, 248, 0.08); color: #f8fafc; }
+
+.trips-buddy-search-empty {
+  padding: 12px;
+  text-align: center;
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* ── Dashboard ── */
+.trips-dashboard {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.trips-dashboard-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 32px;
+  color: #f8fafc;
+}
+
+.trips-dashboard-header h2 {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.trips-dashboard-header p {
+  color: #64748b;
+  font-size: 13px;
+  margin: 2px 0 0 0;
+}
+
+.trips-dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.trips-dashboard-card {
+  background: rgba(17, 24, 39, 0.85);
+  border: 1px solid rgba(144, 224, 239, 0.1);
+  border-radius: 16px;
+  padding: 20px;
+  backdrop-filter: blur(16px);
+}
+
+.trips-dashboard-card h4 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 14px 0;
+}
+
+.trips-dashboard-stat-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.trips-dashboard-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.trips-dashboard-stat-lbl {
+  font-size: 13px;
+  color: #cbd5e1;
+}
+
+.trips-dashboard-stat-val {
+  font-size: 16px;
+  color: #f8fafc;
+  font-weight: 700;
+}
+
+.trips-dashboard-empty {
+  font-size: 13px;
+  color: #475569;
+  margin: 0;
+}
+
+/* ── Buddy Link Button ── */
+.trips-buddy-link-btn {
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  color: #7dd3fc;
+  border-radius: 8px;
+  padding: 6px 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.trips-buddy-link-btn:hover {
+  background: rgba(56, 189, 248, 0.2);
+}
+
+/* ── Checklist (detail view) ── */
+.trips-checklist-readonly {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.trips-checklist-done {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(52, 211, 153, 0.1);
+  border: 1px solid rgba(52, 211, 153, 0.2);
+  border-radius: 8px;
+  font-size: 13px;
+  color: #6ee7b7;
+}
+
+.trips-checklist-check {
+  color: #34d399;
+  font-weight: 700;
+}
+
+/* ── Checklist (form) enhancements ── */
+.trips-checklist-section {
+  border-left: 3px solid #f59e0b;
+  padding-left: 16px;
+}
+
+.trips-checklist-count {
+  margin-left: auto;
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 400;
+}
+
+.trips-checklist-row.checked span {
+  color: #6ee7b7;
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+.trips-checklist-status-hint {
+  margin-top: 12px;
+  font-size: 12px;
+  color: #64748b;
+  font-style: italic;
+}
+
+/* ── Buddy search status ── */
+.trips-buddy-search-status {
+  padding: 12px;
+  text-align: center;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.trips-buddy-search-err {
+  color: #fca5a5;
+}

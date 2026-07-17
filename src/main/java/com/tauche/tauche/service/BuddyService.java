@@ -46,7 +46,7 @@ public class BuddyService {
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        return toDTO(buddyRepository.save(buddy));
+        return toDTO(buddyRepository.save(buddy), requester);
     }
 
     @Transactional
@@ -59,7 +59,7 @@ public class BuddyService {
         }
 
         buddy.setStatus("ACCEPTED");
-        return toDTO(buddyRepository.save(buddy));
+        return toDTO(buddyRepository.save(buddy), currentUser);
     }
 
     @Transactional
@@ -80,19 +80,19 @@ public class BuddyService {
         List<Buddy> sent = buddyRepository.findByDiverAndStatus(currentUser, "ACCEPTED");
         List<Buddy> received = buddyRepository.findByBuddyAndStatus(currentUser, "ACCEPTED");
         sent.addAll(received);
-        return sent.stream().map(this::toDTO).collect(Collectors.toList());
+        return sent.stream().map(b -> toDTO(b, currentUser)).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public List<BuddyDTO> getPendingRequests(Diver currentUser) {
         return buddyRepository.findByBuddyAndStatus(currentUser, "PENDING")
-                .stream().map(this::toDTO).collect(Collectors.toList());
+                .stream().map(b -> toDTO(b, currentUser)).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public List<BuddyDTO> getOutgoingRequests(Diver currentUser) {
         return buddyRepository.findByDiverAndStatus(currentUser, "PENDING")
-                .stream().map(this::toDTO).collect(Collectors.toList());
+                .stream().map(b -> toDTO(b, currentUser)).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
@@ -132,13 +132,14 @@ public class BuddyService {
         );
     }
 
-    private BuddyDTO toDTO(Buddy buddy) {
-        Diver buddyUser = buddy.getDiver().getId().equals(buddy.getBuddy().getId())
-                ? buddy.getBuddy() : buddy.getBuddy();
+    private BuddyDTO toDTO(Buddy buddy, Diver currentUser) {
+        Diver other = buddy.getDiver().getId().equals(currentUser.getId())
+                ? buddy.getBuddy()
+                : buddy.getDiver();
         return BuddyDTO.builder()
                 .id(buddy.getId())
-                .buddyId(buddy.getBuddy().getId())
-                .buddyEmail(buddy.getBuddy().getEmail())
+                .buddyId(other.getId())
+                .buddyEmail(other.getEmail())
                 .status(buddy.getStatus())
                 .createdAt(buddy.getCreatedAt() != null ? buddy.getCreatedAt().toString() : "")
                 .build();

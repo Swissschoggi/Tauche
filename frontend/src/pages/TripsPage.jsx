@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getAllDives, getEquipmentCloset } from '../api/diveApi'
+import JSZip from 'jszip'
 import {
   MapPin, Calendar, Plus, ChevronRight, Anchor, X,
   Clock, Thermometer, Waves, Users, Edit2, Trash2,
   Search, ArrowDown, Camera, Wind, Save, FileText,
-  CheckCircle2, AlertCircle, DollarSign, Cloud
+  CheckCircle2, AlertCircle, DollarSign, Cloud,
+  RefreshCw, BarChart3, Globe, Target, TrendingUp
 } from 'lucide-react'
 import './TripsPage.css'
 
@@ -44,6 +46,14 @@ const EMPTY_TRIP = {
   budget: { currency: 'USD', total: 0, spent: 0 },
   weatherNotes: '',
   itinerary: [],
+  tripChecklist: [
+    { id: 1, label: 'Gear serviced and ready', checked: false },
+    { id: 2, label: 'Travel booked', checked: false },
+    { id: 3, label: 'Accommodation confirmed', checked: false },
+    { id: 4, label: 'Permits obtained', checked: false },
+    { id: 5, label: 'Dive insurance active', checked: false },
+    { id: 6, label: 'Emergency contacts shared', checked: false },
+  ],
 }
 
 function generateItineraryDays(startDate, endDate) {
@@ -91,6 +101,15 @@ export default function TripsPage() {
   const [formError, setFormError] = useState('')
   const locationTimeoutRef = useRef(null)
 
+  // Weather forecast
+  const [weatherForecast, setWeatherForecast] = useState(null)
+  const [weatherLoading, setWeatherLoading] = useState(false)
+
+  // Import
+  const [importing, setImporting] = useState(false)
+  const [importError, setImportError] = useState('')
+  const fileInputRef = useRef(null)
+
   useEffect(() => {
     getAllDives().then(d => setAllDives(Array.isArray(d) ? d : [])).catch(() => {})
     getEquipmentCloset().then(e => setAllEquipment(Array.isArray(e) ? e : [])).catch(() => {})
@@ -130,7 +149,7 @@ export default function TripsPage() {
 
   const openEdit = (trip, e) => {
     e?.stopPropagation()
-    setFormData({ ...trip })
+    setFormData({ ...trip, tripChecklist: trip.tripChecklist || EMPTY_TRIP.tripChecklist.map(i => ({ ...i })) })
     setFormMode('edit')
     setFormError('')
     setView('form')
@@ -211,6 +230,80 @@ export default function TripsPage() {
     }))
   }
 
+  const handleImportFile = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setImportError('')
+    setImporting(true)
+    try {
+      const zip = await JSZip.loadAsync(file)
+      const jsonFile = zip.file('trip.json')
+      if (!jsonFile) { setImportError('No trip.json found in the archive'); setImporting(false); return }
+      const raw = await jsonFile.async('string')
+      const data = JSON.parse(raw)
+      const t = data.trip
+      if (!t?.name) { setImportError('Invalid trip data'); setImporting(false); return }
+      const dest = t.destinations?.[0]
+      const newTrip = {
+        ...EMPTY_TRIP,
+        id: generateId(),
+        name: t.name,
+        destination: dest ? [dest.name, dest.stateName, dest.countryName].filter(Boolean).join(', ') : '',
+        latitude: dest?.latitude ? parseFloat(dest.latitude) : null,
+        longitude: dest?.longitude ? parseFloat(dest.longitude) : null,
+        startDate: t.startDate ? t.startDate.substring(0, 10) : '',
+        endDate: t.endDate ? t.endDate.substring(0, 10) : '',
+        notes: [t.description, t.notes].filter(Boolean).join('\n\n'),
+        weatherNotes: '',
+        budget: {
+          currency: t.budget?.currency || 'USD',
+          total: t.budget?.value || 0,
+          spent: 0,
+        },
+        diveBuddies: (data.travellerProfiles || []).map(p => ({
+          id: generateId(),
+          name: p.legalName || p.email || '',
+          email: p.email || '',
+          role: 'buddy',
+          type: p.email ? 'account' : 'custom',
+        })),
+        createdAt: new Date().toISOString(),
+      }
+      setTrips(prev => [newTrip, ...prev])
+      setSelectedTrip(newTrip)
+      setView('detail')
+    } catch (err) {
+      setImportError(err.message || 'Failed to import trip')
+    }
+    setImporting(false)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  const toggleChecklistItem = (id) => {
+    setFormData(prev => ({
+      ...prev,
+      tripChecklist: (prev.tripChecklist || []).map(i => i.id === id ? { ...i, checked: !i.checked } : i)
+    }))
+  }
+
+  const fetchWeatherForecast = async (lat, lng, startDate, endDate) => {
+    if (!lat || !lng || !startDate) return
+    setWeatherLoading(true)
+    try {
+      const end = endDate || startDate
+      const res = await fetch(
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_sum,wind_speed_10m_max&timezone=auto&start_date=${startDate}&end_date=${end}`
+      )
+      const data = await res.json()
+      if (data?.daily?.time) {
+        setWeatherForecast(data)
+      } else {
+        setWeatherForecast(null)
+      }
+    } catch { setWeatherForecast(null) }
+    setWeatherLoading(false)
+  }
+
   // Auto-generate itinerary days when dates change
   useEffect(() => {
     if (formData.startDate && view === 'form') {
@@ -226,6 +319,21 @@ export default function TripsPage() {
       })
     }
   }, [formData.startDate, formData.endDate, view])
+
+  // Fetch weather forecast when destination and dates are set
+  useEffect(() => {
+    if (formData.latitude && formData.longitude && formData.startDate && view === 'form') {
+      fetchWeatherForecast(formData.latitude, formData.longitude, formData.startDate, formData.endDate)
+    }
+  }, [formData.latitude, formData.longitude, formData.startDate, formData.endDate, view])
+
+  // Fetch weather for detail view
+  useEffect(() => {
+    const trip = trips.find(t => t.id === selectedTrip?.id) || selectedTrip
+    if (trip?.latitude && trip?.longitude && trip?.startDate && view === 'detail') {
+      fetchWeatherForecast(trip.latitude, trip.longitude, trip.startDate, trip.endDate)
+    }
+  }, [view, selectedTrip?.id])
 
   const tripDives = (trip) => allDives.filter(d => trip?.diveLogIds?.includes(d.id))
 
@@ -373,34 +481,65 @@ export default function TripsPage() {
                 </div>
               </div>
 
-              <div className="trips-form-section">
-                <label>Link Dive Logs</label>
-                <p className="trips-form-hint">Select dives from your logbook to attach to this trip</p>
-                <div className="trips-dive-picker">
-                  {allDives.length === 0 ? (
-                    <p className="trips-empty-hint">No dives logged yet</p>
-                  ) : allDives.map(dive => {
-                    const selected = formData.diveLogIds.includes(dive.id)
-                    return (
-                      <div
-                        key={dive.id}
-                        className={`trips-dive-pick-row ${selected ? 'selected' : ''}`}
-                        onClick={() => toggleDiveInTrip(dive.id)}
-                      >
-                        <div className={`trips-dive-check ${selected ? 'checked' : ''}`}>
-                          {selected && '✓'}
-                        </div>
-                        <div className="trips-dive-pick-info">
-                          <span className="trips-dive-pick-title">{dive.diveTitle || 'Untitled'}</span>
-                          <span className="trips-dive-pick-meta">
-                            {dive.date} · {dive.location?.split(',')[0]} · {dive.depthMeters}m
-                          </span>
-                        </div>
-                      </div>
-                    )
-                  })}
+              {formData.status === 'planning' && (
+                <div className="trips-form-section trips-checklist-section">
+                  <label>
+                    Pre-Trip Checklist
+                    <span className="trips-checklist-count">
+                      {(formData.tripChecklist || []).filter(i => i.checked).length}/{(formData.tripChecklist || []).length} done
+                    </span>
+                  </label>
+                  <p className="trips-form-hint">Tick off items as you complete them — they'll be saved with the trip</p>
+                  <div className="trips-checklist">
+                    {(formData.tripChecklist || []).map(item => (
+                      <label key={item.id} className={`trips-checklist-row ${item.checked ? 'checked' : ''}`}>
+                        <input
+                          type="checkbox"
+                          checked={item.checked}
+                          onChange={() => toggleChecklistItem(item.id)}
+                        />
+                        <span>{item.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <div className="trips-checklist-status-hint">
+                    {formData.tripChecklist && formData.tripChecklist.every(i => i.checked) 
+                      ? '✓ All done! You\'re ready to change the status to Active.'
+                      : 'Set status to Active when you\'re ready to go.'}
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {formData.status !== 'planning' && (
+                <div className="trips-form-section">
+                  <label>Link Dive Logs</label>
+                  <p className="trips-form-hint">Select dives from your logbook to attach to this trip</p>
+                  <div className="trips-dive-picker">
+                    {allDives.length === 0 ? (
+                      <p className="trips-empty-hint">No dives logged yet</p>
+                    ) : allDives.map(dive => {
+                      const selected = formData.diveLogIds.includes(dive.id)
+                      return (
+                        <div
+                          key={dive.id}
+                          className={`trips-dive-pick-row ${selected ? 'selected' : ''}`}
+                          onClick={() => toggleDiveInTrip(dive.id)}
+                        >
+                          <div className={`trips-dive-check ${selected ? 'checked' : ''}`}>
+                            {selected && '✓'}
+                          </div>
+                          <div className="trips-dive-pick-info">
+                            <span className="trips-dive-pick-title">{dive.diveTitle || 'Untitled'}</span>
+                            <span className="trips-dive-pick-meta">
+                              {dive.date} · {dive.location?.split(',')[0]} · {dive.depthMeters}m
+                            </span>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
 
               <div className="trips-form-section">
                 <label>Dive Buddies <span className="trips-hint">(optional)</span></label>
@@ -409,13 +548,15 @@ export default function TripsPage() {
                   {(formData.diveBuddies || []).map(buddy => (
                     <div key={buddy.id} className="trips-buddy-row">
                       <div className="trips-buddy-inputs">
-                        <input
-                          type="text"
-                          placeholder="Buddy name"
-                          className="trips-buddy-input"
-                          value={buddy.name}
-                          onChange={e => updateDiveBuddy(buddy.id, 'name', e.target.value)}
-                        />
+                        <div style={{ position: 'relative', flex: 1, display: 'flex', gap: 4 }}>
+                          <input
+                            type="text"
+                            placeholder="Buddy name"
+                            className="trips-buddy-input"
+                            value={buddy.name}
+                            onChange={e => updateDiveBuddy(buddy.id, 'name', e.target.value)}
+                          />
+                        </div>
                         <select
                           className="trips-buddy-role"
                           value={buddy.role}
@@ -590,6 +731,36 @@ export default function TripsPage() {
 
               <div className="trips-form-section">
                 <label>Weather & Conditions <span className="trips-hint">(optional)</span></label>
+                {weatherForecast && (
+                  <div className="trips-forecast-card">
+                    <div className="trips-forecast-header">
+                      <Cloud size={14} /> Forecast
+                      <button
+                        type="button"
+                        className="trips-forecast-refresh"
+                        onClick={() => fetchWeatherForecast(formData.latitude, formData.longitude, formData.startDate, formData.endDate)}
+                        title="Refresh"
+                      >
+                        <RefreshCw size={11} />
+                      </button>
+                    </div>
+                    <div className="trips-forecast-days">
+                      {weatherForecast.daily.time.map((date, i) => {
+                        const code = weatherForecast.daily.weathercode[i]
+                        const label = code === 0 ? '☀️' : code < 3 ? '⛅' : code < 50 ? '☁️' : code < 60 ? '🌧️' : '⛈️'
+                        return (
+                          <div key={date} className="trips-forecast-day">
+                            <span className="trips-forecast-date">{new Date(date).toLocaleDateString('en', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
+                            <span className="trips-forecast-icon">{label}</span>
+                            <span className="trips-forecast-temp">{Math.round(weatherForecast.daily.temperature_2m_min[i])}° / {Math.round(weatherForecast.daily.temperature_2m_max[i])}°</span>
+                            <span className="trips-forecast-wind">{weatherForecast.daily.wind_speed_10m_max[i]} km/h</span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+                {weatherLoading && <p className="trips-forecast-loading">Loading forecast…</p>}
                 <textarea
                   className="trips-textarea"
                   rows={3}
@@ -700,6 +871,23 @@ export default function TripsPage() {
             </div>
           )}
 
+          {/* Pre-Trip Checklist */}
+          {trip.tripChecklist && trip.tripChecklist.some(i => i.checked) && (
+            <div className="trips-detail-section">
+              <h3 className="trips-section-title">
+                <CheckCircle2 size={16} style={{ color: '#f59e0b' }} /> Pre-Trip Checklist
+              </h3>
+              <div className="trips-checklist-readonly">
+                {trip.tripChecklist.filter(i => i.checked).map(item => (
+                  <div key={item.id} className="trips-checklist-done">
+                    <span className="trips-checklist-check">✓</span>
+                    {item.label}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Dive Buddies */}
           {trip.diveBuddies && trip.diveBuddies.length > 0 && (
             <div className="trips-detail-section">
@@ -784,12 +972,41 @@ export default function TripsPage() {
           )}
 
           {/* Weather & Conditions */}
-          {trip.weatherNotes && (
+          {(trip.weatherNotes || weatherForecast) && (
             <div className="trips-detail-section">
               <h3 className="trips-section-title">
                 <Cloud size={16} style={{ color: '#60a5fa' }} /> Conditions
               </h3>
-              <div className="trips-notes-body">{trip.weatherNotes}</div>
+              {weatherForecast && (
+                <div className="trips-forecast-card" style={{ marginBottom: '12px' }}>
+                  <div className="trips-forecast-header">
+                    <Cloud size={14} /> Forecast
+                    <button
+                      type="button"
+                      className="trips-forecast-refresh"
+                      onClick={() => fetchWeatherForecast(trip.latitude, trip.longitude, trip.startDate, trip.endDate)}
+                      title="Refresh"
+                    >
+                      <RefreshCw size={11} />
+                    </button>
+                  </div>
+                  <div className="trips-forecast-days">
+                    {weatherForecast.daily.time.map((date, i) => {
+                      const code = weatherForecast.daily.weathercode[i]
+                      const label = code === 0 ? '☀️' : code < 3 ? '⛅' : code < 50 ? '☁️' : code < 60 ? '🌧️' : '⛈️'
+                      return (
+                        <div key={date} className="trips-forecast-day">
+                          <span className="trips-forecast-date">{new Date(date).toLocaleDateString('en', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
+                          <span className="trips-forecast-icon">{label}</span>
+                          <span className="trips-forecast-temp">{Math.round(weatherForecast.daily.temperature_2m_min[i])}° / {Math.round(weatherForecast.daily.temperature_2m_max[i])}°</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+              {weatherLoading && <p className="trips-forecast-loading">Loading forecast…</p>}
+              {trip.weatherNotes && <div className="trips-notes-body">{trip.weatherNotes}</div>}
             </div>
           )}
 
@@ -825,45 +1042,41 @@ export default function TripsPage() {
           )}
 
           {/* Dive log list */}
-          <div className="trips-detail-section">
-            <h3 className="trips-section-title">
-              <Anchor size={16} style={{ color: '#38bdf8' }} /> Dive Logs
-              <button className="trips-btn-sm" onClick={() => openEdit(trip)}>
-                <Plus size={13} /> Add
-              </button>
-            </h3>
-            {dives.length === 0 ? (
-              <div className="trips-empty-section">
-                <p>No dives linked yet.</p>
-                <button className="trips-btn-primary" style={{ marginTop: '12px' }} onClick={() => openEdit(trip)}>
-                  <Plus size={15} /> Link Dive Logs
-                </button>
-              </div>
-            ) : (
-              <div className="trips-dive-list">
-                {dives.map(dive => (
-                  <div
-                    key={dive.id}
-                    className="trips-dive-row"
-                    onClick={() => navigate(`/dives/${dive.id}`)}
-                  >
-                    <div className="trips-dive-row-left">
-                      <div className="trips-dive-depth-badge">{dive.depthMeters || '?'}m</div>
-                      <div>
-                        <div className="trips-dive-row-title">{dive.diveTitle || 'Untitled'}</div>
-                        <div className="trips-dive-row-meta">
-                          <span><MapPin size={11} /> {dive.location?.split(',')[0]}</span>
-                          <span><Calendar size={11} /> {dive.date}</span>
-                          {dive.durationMinutes && <span><Clock size={11} /> {dive.durationMinutes} min</span>}
+          {trip.status !== 'planning' && (
+            <div className="trips-detail-section">
+              <h3 className="trips-section-title">
+                <Anchor size={16} style={{ color: '#38bdf8' }} /> Dive Logs
+              </h3>
+              {dives.length === 0 ? (
+                <div className="trips-empty-section">
+                  <p>No dives linked yet.</p>
+                </div>
+              ) : (
+                <div className="trips-dive-list">
+                  {dives.map(dive => (
+                    <div
+                      key={dive.id}
+                      className="trips-dive-row"
+                      onClick={() => navigate(`/dives/${dive.id}`)}
+                    >
+                      <div className="trips-dive-row-left">
+                        <div className="trips-dive-depth-badge">{dive.depthMeters || '?'}m</div>
+                        <div>
+                          <div className="trips-dive-row-title">{dive.diveTitle || 'Untitled'}</div>
+                          <div className="trips-dive-row-meta">
+                            <span><MapPin size={11} /> {dive.location?.split(',')[0]}</span>
+                            <span><Calendar size={11} /> {dive.date}</span>
+                            {dive.durationMinutes && <span><Clock size={11} /> {dive.durationMinutes} min</span>}
+                          </div>
                         </div>
                       </div>
+                      <ChevronRight size={16} style={{ color: '#475569' }} />
                     </div>
-                    <ChevronRight size={16} style={{ color: '#475569' }} />
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Notes */}
           {trip.notes && (
@@ -874,6 +1087,116 @@ export default function TripsPage() {
               <div className="trips-notes-body">{trip.notes}</div>
             </div>
           )}
+        </div>
+      </div>
+    )
+  }
+
+  // ──────────────────────────────────────
+  // DASHBOARD VIEW
+  // ──────────────────────────────────────
+  if (view === 'dashboard') {
+    const totalTrips = trips.length
+    const planning = trips.filter(t => t.status === 'planning')
+    const active = trips.filter(t => t.status === 'active')
+    const completed = trips.filter(t => t.status === 'completed')
+    const totalDives = trips.reduce((s, t) => s + (t.diveLogIds?.length || 0), 0)
+    const destCounts = trips.reduce((acc, t) => {
+      const dest = t.destination?.split(',')[0]?.trim()
+      if (dest) acc[dest] = (acc[dest] || 0) + 1
+      return acc
+    }, {})
+    const topDestinations = Object.entries(destCounts).sort((a, b) => b[1] - a[1]).slice(0, 5)
+    const totalBudget = trips.reduce((s, t) => s + (t.budget?.total || 0), 0)
+    const totalSpent = trips.reduce((s, t) => s + (t.budget?.spent || 0), 0)
+    const allBuddyNames = trips.flatMap(t => (t.diveBuddies || []).map(b => b.name).filter(Boolean))
+    const uniqueBuddies = [...new Set(allBuddyNames)]
+
+    return (
+      <div className="trips-page">
+        <button className="back-dashboard-global-btn" onClick={() => setView('list')}>
+          ← All Trips
+        </button>
+        <div className="trips-dashboard">
+          <div className="trips-dashboard-header">
+            <BarChart3 size={24} />
+            <div>
+              <h2>Trip Dashboard</h2>
+              <p>{totalTrips} trip{totalTrips !== 1 ? 's' : ''} · {totalDives} dive{totalDives !== 1 ? 's' : ''}</p>
+            </div>
+          </div>
+
+          <div className="trips-dashboard-grid">
+            <div className="trips-dashboard-card">
+              <h4><Target size={16} /> By Status</h4>
+              <div className="trips-dashboard-stat-list">
+                <div className="trips-dashboard-stat">
+                  <span className="trips-dashboard-stat-lbl" style={{ color: '#f59e0b' }}>Planning</span>
+                  <span className="trips-dashboard-stat-val">{planning.length}</span>
+                </div>
+                <div className="trips-dashboard-stat">
+                  <span className="trips-dashboard-stat-lbl" style={{ color: '#34d399' }}>Active</span>
+                  <span className="trips-dashboard-stat-val">{active.length}</span>
+                </div>
+                <div className="trips-dashboard-stat">
+                  <span className="trips-dashboard-stat-lbl" style={{ color: '#38bdf8' }}>Completed</span>
+                  <span className="trips-dashboard-stat-val">{completed.length}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="trips-dashboard-card">
+              <h4><Globe size={16} /> Top Destinations</h4>
+              {topDestinations.length === 0 ? (
+                <p className="trips-dashboard-empty">No destinations yet</p>
+              ) : (
+                <div className="trips-dashboard-stat-list">
+                  {topDestinations.map(([dest, count]) => (
+                    <div key={dest} className="trips-dashboard-stat">
+                      <span className="trips-dashboard-stat-lbl">{dest}</span>
+                      <span className="trips-dashboard-stat-val">{count} trip{count !== 1 ? 's' : ''}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="trips-dashboard-card">
+              <h4><DollarSign size={16} /> Budget</h4>
+              <div className="trips-dashboard-stat-list">
+                <div className="trips-dashboard-stat">
+                  <span className="trips-dashboard-stat-lbl">Total Budget</span>
+                  <span className="trips-dashboard-stat-val">${totalBudget.toLocaleString()}</span>
+                </div>
+                <div className="trips-dashboard-stat">
+                  <span className="trips-dashboard-stat-lbl">Total Spent</span>
+                  <span className="trips-dashboard-stat-val">${totalSpent.toLocaleString()}</span>
+                </div>
+                {totalBudget > 0 && (
+                  <div className="trips-dashboard-stat">
+                    <span className="trips-dashboard-stat-lbl">Remaining</span>
+                    <span className="trips-dashboard-stat-val" style={{ color: totalSpent > totalBudget ? '#ef4444' : '#34d399' }}>
+                      ${(totalBudget - totalSpent).toLocaleString()}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="trips-dashboard-card">
+              <h4><TrendingUp size={16} /> Stats</h4>
+              <div className="trips-dashboard-stat-list">
+                <div className="trips-dashboard-stat">
+                  <span className="trips-dashboard-stat-lbl">Avg Dives per Trip</span>
+                  <span className="trips-dashboard-stat-val">{totalTrips ? (totalDives / totalTrips).toFixed(1) : 0}</span>
+                </div>
+                <div className="trips-dashboard-stat">
+                  <span className="trips-dashboard-stat-lbl">Unique Dive Buddies</span>
+                  <span className="trips-dashboard-stat-val">{uniqueBuddies.length}</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     )
@@ -896,9 +1219,24 @@ export default function TripsPage() {
             </h2>
             <p className="trips-list-subtitle">Plan and track your dive expeditions</p>
           </div>
-          <button className="trips-btn-primary" onClick={openCreate}>
-            <Plus size={16} /> New Trip
-          </button>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button className="trips-btn-secondary" onClick={() => setView('dashboard')}>
+              <BarChart3 size={16} /> Dashboard
+            </button>
+            <button className="trips-btn-secondary" onClick={() => fileInputRef.current?.click()} disabled={importing}>
+              📥 Import
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".zip"
+              style={{ display: 'none' }}
+              onChange={handleImportFile}
+            />
+            <button className="trips-btn-primary" onClick={openCreate}>
+              <Plus size={16} /> New Trip
+            </button>
+          </div>
         </div>
 
         <div className="trips-search-bar">
@@ -911,14 +1249,30 @@ export default function TripsPage() {
           />
         </div>
 
+        {importError && (
+          <div className="trips-form-error" style={{ marginBottom: '16px', maxWidth: '640px', margin: '0 auto 16px' }}>
+            {importError}
+          </div>
+        )}
+        {importing && (
+          <div className="trips-search-bar" style={{ justifyContent: 'center', maxWidth: '640px', margin: '0 auto 16px' }}>
+            <p style={{ color: '#94a3b8', fontSize: '13px', margin: 0 }}>Importing trip…</p>
+          </div>
+        )}
+
         {trips.length === 0 ? (
           <div className="trips-empty-state">
             <Anchor size={48} strokeWidth={1} style={{ color: '#334155', marginBottom: '16px' }} />
             <p>No trips yet</p>
             <small>Create your first trip to organize dives by expedition</small>
-            <button className="trips-btn-primary" style={{ marginTop: '20px' }} onClick={openCreate}>
-              <Plus size={15} /> Plan First Trip
-            </button>
+            <div style={{ display: 'flex', gap: '10px', marginTop: '20px', justifyContent: 'center' }}>
+              <button className="trips-btn-primary" onClick={openCreate}>
+                <Plus size={15} /> Plan First Trip
+              </button>
+              <button className="trips-btn-secondary" onClick={() => fileInputRef.current?.click()}>
+                📥 Import from Surmai
+              </button>
+            </div>
           </div>
         ) : filteredTrips.length === 0 ? (
           <div className="trips-empty-state">

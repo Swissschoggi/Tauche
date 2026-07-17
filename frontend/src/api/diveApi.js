@@ -4,7 +4,7 @@ const isDevelopment = window.location.hostname === 'localhost' ||
                       window.location.hostname === '127.0.0.1';
 
 const backendBaseUrl = isDevelopment 
-  ? `${window.location.protocol}//${window.location.hostname}:8989`
+  ? `${window.location.protocol}//${window.location.hostname}:8080`
   : ''; 
 
 const api = axios.create({
@@ -446,5 +446,10 @@ export async function getNearbyDiveShops({ lat, lng, location, radius = 5000 } =
     params.location = location
   }
   const response = await api.get("/dive-shops/nearby", { params });
+  return response.data;
+}
+
+export async function getSightings() {
+  const response = await api.get("/dives/sightings");
   return response.data;
 }

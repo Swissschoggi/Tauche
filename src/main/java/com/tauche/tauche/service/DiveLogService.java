@@ -1,13 +1,16 @@
 package com.tauche.tauche.service;
 
-import java.util.List;
-import java.util.Optional;
+import java.time.LocalDate;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.tauche.tauche.model.DiveLog;
+import com.tauche.tauche.model.GalleryImage;
 import com.tauche.tauche.repository.DiveLogRepository;
+import com.tauche.tauche.repository.GalleryImageRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 public class DiveLogService {
 
     private final DiveLogRepository repository;
+    private final GalleryImageRepository galleryImageRepository;
 
     public List<DiveLog> getAll() {
         return repository.findAll();
@@ -92,6 +96,76 @@ public class DiveLogService {
     @Transactional(readOnly = true)
     public List<DiveLog> getByDiverId(Long diverId) {
         return repository.findByDiverIdWithEquipment(diverId);
+    }
+
+    private static final Set<String> VALID_SPECIES = Set.of(
+        "sea turtle", "green turtle", "hawksbill turtle",
+        "reef shark", "whitetip reef shark", "blacktip reef shark", "hammerhead shark",
+        "manta ray", "eagle ray", "spotted eagle ray", "stingray",
+        "moray eel", "green moray", "spotted moray",
+        "clownfish", "angelfish", "parrotfish", "butterflyfish", "lionfish", "pufferfish",
+        "octopus", "cuttlefish", "squid", "seahorse", "pipefish",
+        "nudibranch", "crab", "lobster", "shrimp", "sea star", "urchin",
+        "barracuda", "grouper", "snapper", "trevally", "triggerfish", "wrasse",
+        "surgeonfish", "batfish", "frogfish", "scorpionfish", "stonefish", "damselfish",
+        "dolphin", "whale shark", "mola mola", "jellyfish", "sea cucumber",
+        "anemone", "flounder", "goatfish", "blenny", "goby", "conch"
+    );
+
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getSpeciesSightings(Long diverId) {
+        List<DiveLog> dives = repository.findByDiverIdWithEquipment(diverId);
+        List<Long> diveIds = dives.stream().map(DiveLog::getId).toList();
+        if (diveIds.isEmpty()) return List.of();
+
+        List<GalleryImage> images = galleryImageRepository.findByDiveLogIdIn(diveIds);
+        Map<String, Long> counts = new LinkedHashMap<>();
+        Map<String, List<Long>> speciesDiveIds = new LinkedHashMap<>();
+        Map<String, String> sampleImages = new LinkedHashMap<>();
+        Map<String, String> lastSeenMap = new LinkedHashMap<>();
+        Map<String, List<String>> allImagePaths = new LinkedHashMap<>();
+
+        for (GalleryImage img : images) {
+            if (img.getTags() == null || img.getTags().isBlank()) continue;
+            String[] tags = img.getTags().split(",");
+            for (String tag : tags) {
+                String species = tag.trim().toLowerCase();
+                if (species.isEmpty() || !VALID_SPECIES.contains(species)) continue;
+
+                counts.merge(species, 1L, Long::sum);
+                Long diveId = img.getDiveLog().getId();
+                speciesDiveIds.computeIfAbsent(species, k -> new ArrayList<>()).add(diveId);
+
+                allImagePaths.computeIfAbsent(species, k -> new ArrayList<>()).add(img.getImagePath());
+
+                if (!sampleImages.containsKey(species)) {
+                    sampleImages.put(species, img.getImagePath());
+                }
+
+                LocalDate sightingDate = img.getDiveLog().getDate();
+                if (sightingDate != null) {
+                    String existing = lastSeenMap.get(species);
+                    if (existing == null || sightingDate.isAfter(LocalDate.parse(existing))) {
+                        lastSeenMap.put(species, sightingDate.toString());
+                    }
+                }
+            }
+        }
+
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Map.Entry<String, Long> entry : counts.entrySet()) {
+            String species = entry.getKey();
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("species", species.substring(0, 1).toUpperCase() + species.substring(1));
+            item.put("count", entry.getValue());
+            item.put("diveCount", speciesDiveIds.get(species).stream().distinct().count());
+            item.put("imagePath", sampleImages.get(species));
+            item.put("imagePaths", allImagePaths.get(species));
+            item.put("lastSeen", lastSeenMap.get(species));
+            result.add(item);
+        }
+        result.sort((a, b) -> Long.compare((Long) b.get("count"), (Long) a.get("count")));
+        return result;
     }
     
     public Optional<DiveLog> findByShareToken(String token) {

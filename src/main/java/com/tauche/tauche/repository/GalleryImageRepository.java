@@ -12,5 +12,7 @@ public interface GalleryImageRepository extends JpaRepository<GalleryImage, Long
     List<GalleryImage> findByDiveLogIdOrderByCreatedAtAsc(Long diveLogId);
     void deleteByDiveLogId(Long diveLogId);
 
+    List<GalleryImage> findByDiveLogIdIn(List<Long> diveLogIds);
+
     long count();
 }

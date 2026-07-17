@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { getAllDives, deleteDive, getImageUrl } from "../api/diveApi"
-import { BarChart3, Map, Plus, User, Settings, Award, Wrench, Trash2, Star, MapPin, TowerControl, Waves } from "lucide-react"
+import { BarChart3, Map, Plus, User, Settings, Award, Wrench, Trash2, Star, MapPin, TowerControl, Waves, Fish } from "lucide-react"
 import { useFavorites } from '../hooks/useFavorites'
 import SkeletonCard from '../components/SkeletonCard'
 import DiveCalendar from '../components/DiveCalendar'
@@ -122,6 +122,11 @@ export default function HomePage() {
           <button className="btn-dashboard-nav" onClick={() => navigate("/certification")}>
             <Award size={20} />
             Certs
+          </button>
+
+          <button className="btn-dashboard-nav" onClick={() => navigate("/sightings")}>
+            <Fish size={20} />
+            Sightings
           </button>
 
           <button className="btn-dashboard-nav" onClick={() => navigate("/settings")} title="Settings">

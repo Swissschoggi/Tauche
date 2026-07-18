@@ -7,7 +7,7 @@
 
 **Tauche** *(Swiss German for "diving")* is a full-stack web app for logging, tracking, and overanalyzing your scuba dives. Because why let a perfectly good piece of paper do the job when you can build a whole web app about it and also selfhost it?
 
-I partially vibecoded this thing due to time constraints and my general lack of patience for reading docs. If something breaks (and it will), feel free to yell at me via issues — I'm always happy to learn what I (or AI lol) did wrong.
+I partially vibecoded this thing due to time constraints and my general lack of patience for reading docs. If something breaks (and it will), feel free to yell at me via issues I'm always happy to learn what I (or AI lol) did wrong.
 
 > **Live Demo**: [https://tauche.onrender.com](https://tauche.onrender.com)
 >
@@ -18,7 +18,7 @@ I partially vibecoded this thing due to time constraints and my general lack of 
 ## What It Does
 
 ###  Dive Logging
-Every dive gets the full treatment — date, location, depth, duration, water temp, visibility, weather, suit type, gas mix, starting/ending pressure, buddy, dive center, notes, GPS coordinates, and even which equipment you used.
+Every dive gets the full treatment date, location, depth, duration, water temp, visibility, weather, suit type, gas mix, starting/ending pressure, buddy, dive center, notes, GPS coordinates, and even which equipment you used.
 
 ###  Interactive Telemetry Timeline
 An SVG dive profile thingy that shows your depth over time. Fancy curves. Definitely not just a line chart template I found on the internet.
@@ -27,7 +27,7 @@ An SVG dive profile thingy that shows your depth over time. Fancy curves. Defini
 All your dives plotted on a map. Powered by OpenStreetMap because Google wanted money.
 
 ###  Photo Gallery & Marine Life Sightings
-Upload photos per dive, tag them with marine species (54 species to choose from, or add custom ones for fun). The **Sightings Dashboard** aggregates everything — thumbnails, counts, last seen dates, expandable photo strips, search, and sort. Custom tags won't get counted as species cause if you put your own name you apparently count as a fish.
+Upload photos per dive, tag them with marine species (54 species to choose from, or add custom ones for fun). The **Sightings Dashboard** aggregates everything thumbnails, counts, last seen dates, expandable photo strips, search, and sort. Custom tags won't get counted as species cause if you put your own name you apparently count as a fish.
 
 ###  Equipment Closet
 Track your gear, set service intervals, mark things as needing maintenance. Because your BCD deserves better than "eh, probably fine." (speaking from experience)
